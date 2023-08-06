@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use Carbon\CarbonPeriod;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Exports\ProjectsExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CounterController extends Controller
 {
@@ -37,5 +40,21 @@ class CounterController extends Controller
         $project = Project::findOrFail($id)->delete();
 
         return redirect()->route('home');
+    }
+
+    public function view(int $id)
+    {
+
+        $project = Project::findOrFail($id);
+
+
+        return view('table', compact('project'));
+    }
+
+    public function export(int $id)
+    {
+        $project = Project::findOrFail($id);
+        $slug = Str::slug($project->title);
+        return Excel::download(new ProjectsExport($project), 'projects-' . $slug . '.xlsx');
     }
 }
