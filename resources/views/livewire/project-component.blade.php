@@ -5,8 +5,8 @@
             <div class="card-header">
                 <div class="row">
                     <div class="col-6">
-                        <label for="inlineFormSelectPref">Start time</label>
-                        <select class="form-select" id="inlineFormSelectPref"
+                        <label for="projectData.{{ $loop->index }}.start_time">Start time</label>
+                        <select class="form-select" id="projectData.{{ $loop->index }}.start_time"
                             wire:model="projectData.{{ $loop->index }}.start_time">
                             <option value="">Select Start time</option>
                             @foreach ($hours as $h)
@@ -15,8 +15,8 @@
                         </select>
                     </div>
                     <div class="col-6">
-                        <label for="inlineFormSelectPref2">End time</label>
-                        <select class="form-select" id="inlineFormSelectPref2"
+                        <label for="projectData.{{ $loop->index }}.end_time">End time</label>
+                        <select class="form-select" id="projectData.{{ $loop->index }}.end_time"
                             wire:model="projectData.{{ $loop->index }}.end_time">
                             <option value="">Select End time</option>
                             @foreach ($hours as $h)
