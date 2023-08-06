@@ -16,3 +16,4 @@ use App\Http\Controllers\CounterController;
 
 Route::get('/', [CounterController::class,'index'])->name('home');
 Route::get('/project/{id}', [CounterController::class, 'project'])->name('project');
+Route::get('/project/delete/{id}', [CounterController::class, 'delete'])->name('project.delete');

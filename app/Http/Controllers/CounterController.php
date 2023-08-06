@@ -30,4 +30,12 @@ class CounterController extends Controller
 
         return view('project', compact('project'));
     }
+
+    public function delete(int $id)
+    {
+
+        $project = Project::findOrFail($id)->delete();
+
+        return redirect()->route('home');
+    }
 }

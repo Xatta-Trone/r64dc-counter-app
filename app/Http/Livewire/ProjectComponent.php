@@ -69,6 +69,33 @@ class ProjectComponent extends Component
         session()->flash('message', 'Record Updated.');
     }
 
+    public function duplicate()
+    {
+        $duplicate = $this->projectData[0];
+        $items = [];
+        // $this->newCardData['data'][] = [
+        //     'title' => $this->itemToCount,
+        //     'left' => 0,
+        //     'through' => 0,
+        //     'right' => 0,
+        // ];
+
+        foreach ($duplicate['data'] as $item) {
+            $items[] = [
+                'title' => $item['title'],
+                'left' => 0,
+                'through' => 0,
+                'right' => 0,
+            ];
+        }
+
+        $duplicate['data'] = $items;
+
+        array_push($this->projectData, $duplicate);
+
+        // $this->project->update(['data' => $this->projectData]);
+    }
+
 
     public function mount(Project $project)
     {

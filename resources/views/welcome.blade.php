@@ -10,6 +10,8 @@
         @foreach ($projects as $project)
             <li class="list-group-item">
                 <a href="{{route('project',['id' => $project->id])}}">{{ $project->title }}</a>
+                
+                <a href="{{route('project.delete',$project->id)}}" class="btn btn-sm btn-danger">Delete</a>
             </li>
         @endforeach
     </ul>
