@@ -15,6 +15,18 @@
                             <a class="nav-link active" aria-current="page" href="{{ route('home') }}">Home</a>
                         </li>
 
+                        <li class="nav-item" style="cursor: pointer;">
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <a class="nav-link" :href="route('logout')"
+                                    onclick="event.preventDefault();
+                                                this.closest('form').submit();">
+                                    {{ __('Log Out') }}</a>
+
+                            </form>
+                        </li>
+
+
                     </ul>
                 </div>
             </div>
