@@ -11,11 +11,13 @@
 </head>
 
 <body x-data="initLayout()" @keypress="handleClick($event)">
-    <div class="container">
-        <h1 class="text-center">Route64DC Count Data Sheet</h1>
-        <p><a href="{{ route('home') }}">Home</a></p>
+    <x-navbar-component/>
+
+    <div class="container my-5">
         {{ $slot }}
     </div>
+
+    <x-footer-component/>
 
     @livewireScripts
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
