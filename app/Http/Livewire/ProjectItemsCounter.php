@@ -24,7 +24,7 @@ class ProjectItemsCounter extends Component
         }
     }
 
-    protected $listeners = ['clickKey' => 'handleClickKey'];
+    protected $listeners = ['clickKey' => 'handleClickKey', 'saveData' => 'update'];
 
 
     public function handleClickKey($data)
@@ -58,6 +58,11 @@ class ProjectItemsCounter extends Component
     {
         $this->project->update(['data' => $this->projectData]);
         session()->flash('message', 'Record Updated.');
+    }
+
+    public function test()
+    {
+        dd('test');
     }
 
 
