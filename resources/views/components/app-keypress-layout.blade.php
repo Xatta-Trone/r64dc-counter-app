@@ -10,11 +10,10 @@
     @livewireStyles
 </head>
 
-<body>
-
+<body x-data="initLayout()" @keypress="handleClick($event)">
     <div class="container">
         <h1 class="text-center">Route64DC Count Data Sheet</h1>
-        <p><a href="{{route('home')}}">Home</a></p>
+        <p><a href="{{ route('home') }}">Home</a></p>
         {{ $slot }}
     </div>
 
@@ -25,6 +24,21 @@
     </script>
 
     @stack('scripts')
+
+    <script>
+        function initLayout() {
+            return {
+                handleClick(e) {
+                    console.log(e)
+                    Livewire.emit('clickKey', e.key)
+                }
+            }
+        }
+    </script>
+
+
+
+
 
 </body>
 

@@ -28,36 +28,14 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    @foreach ($data['data'] as $countItem)
-                        <div class="col-3">
-                            <h5>{{ $countItem['title'] }}</h5>
-                            <div class="btn-group" role="group" aria-label="Basic outlined example">
-                                <button type="button" class="btn btn-outline-success"
-                                    wire:click="increment({{ $loop->parent->index }},{{ $loop->index }},'left')">Left
-                                    {{ $countItem['left'] }}</button>
-                                <button type="button" class="btn btn-outline-success"
-                                    wire:click="increment({{ $loop->parent->index }},{{ $loop->index }},'through')">Through
-                                    {{ $countItem['through'] }}</button>
-                                <button type="button" class="btn btn-outline-success"
-                                    wire:click="increment({{ $loop->parent->index }},{{ $loop->index }},'right')">Right
-                                    {{ $countItem['right'] }}</button>
-                            </div>
-                            <div class="btn-group mt-2" role="group" aria-label="Basic outlined example">
-                                <button type="button" class="btn btn-outline-danger"
-                                    wire:click="decrement({{ $loop->parent->index }},{{ $loop->index }},'left')">Left
-                                    {{ $countItem['left'] }}</button>
-                                <button type="button" class="btn btn-outline-danger"
-                                    wire:click="decrement({{ $loop->parent->index }},{{ $loop->index }},'through')">Through
-                                    {{ $countItem['through'] }}</button>
-                                <button type="button" class="btn btn-outline-danger"
-                                    wire:click="decrement({{ $loop->parent->index }},{{ $loop->index }},'right')">Right
-                                    {{ $countItem['right'] }}</button>
-                            </div>
-                        </div>
-                    @endforeach
+                    <ul class="list-group">
+                        @foreach ($data['data'] as $countItem)
+                            <li class="list-group-item"><span class="badge text-bg-primary">Item Name</span>
+                                {{ $countItem['title'] }} <span class="badge text-bg-primary">Keyboard key</span>
+                                <kbd>{{ $countItem['key'] }}</kbd> </li>
+                        @endforeach
+                    </ul>
                 </div>
-
-
             </div>
         </div>
     @endforeach
@@ -129,29 +107,26 @@
                         <button wire:click="save" class="btn btn-primary">Save</button>
                     </div>
 
-                    {{ json_encode($newCardData) }}
-                    {{ $mapKeyData }}
+                    @if (env('APP_ENV') == 'local')
+                        {{ json_encode($newCardData) }}
+                        {{ $mapKeyData }}
+                    @endif
+
+
+
+
 
                 </div>
             </div>
         </div>
 
     @endif
-
-    <div id="test" class="test">asdfasdf</div>
 </div>
-
-<style>
-    .test:focus {
-        color: red;
-        background-color: red;
-    }
-</style>
 
 @pushOnce('scripts')
     <script>
         function myKeyPress(e) {
-            var keynum;
+            let keynum;
             // console.log(e)
 
             if (window.event) { // IE
@@ -177,9 +152,6 @@
         window.livewire.on('focus', function(id) {
             // console.log(id)
             document.getElementById(`${id}`).focus();
-        });
-        document.addEventListener("DOMContentLoaded", () => {
-            document.getElementById("test").focus();
         });
     </script>
 @endPushOnce

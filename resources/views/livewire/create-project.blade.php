@@ -5,7 +5,7 @@
             <div class="mb-3">
                 <label for="exampleInputEmail1" class="form-label">Project Name</label>
                 <input type="text" class="form-control" id="exampleInputEmail1" wire:model="title">
-                 @error('title') <span class="error">{{ $message }}</span> @enderror
+                 @error('title') <span class="text-danger">{{ $message }}</span> @enderror
             </div>
             <button type="submit" class="btn btn-primary">Create</button>
         </form>

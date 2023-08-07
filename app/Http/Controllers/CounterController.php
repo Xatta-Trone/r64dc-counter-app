@@ -51,6 +51,12 @@ class CounterController extends Controller
         return view('table', compact('project'));
     }
 
+    public function addItems(int $id)
+    {
+        $project = Project::findOrFail($id);
+        return view('add-items', compact('project'));
+    }
+
     public function export(int $id)
     {
         $project = Project::findOrFail($id);
