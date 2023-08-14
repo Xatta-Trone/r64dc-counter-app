@@ -2,27 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
 use App\Models\Project;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Exports\ProjectsExport;
+use App\Http\Requests\CounterStoreRequest;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CounterController extends Controller
 {
-    public function index()  {
+    public function index()
+    {
+        $projects = Project::select('id', 'title', 'created_at')->orderBy('id', 'desc')->paginate(10);
 
+        return Inertia::render('Projects/Index', [
+            'projects' => $projects,
+        ]);
+    }
 
-        // $c = CarbonPeriod::since('00:00')->minutes(5)->until('23:59')->toArray();
+    public function create()
+    {
+        $c = CarbonPeriod::since('00:00')->minutes(5)->until('23:59')->toArray();
 
-        // dd($c);
+        $data = [];
+        foreach ($c as $a) {
+            $data[] = $a->format('H:i');
+        }
+        return Inertia::render('Projects/Create', ['times' => $data]);
+    }
 
-        $projects = Project::select('id','title','created_at')->orderBy('id','desc')->paginate(20);
+    public function store(CounterStoreRequest $request)
+    {
+        $c = CarbonPeriod::since($request->start_time)->minutes($request->interval)->until($request->end_time)->toArray();
 
-
-        return view('welcome',compact('projects'));
-
+        dd($request->all(), $c);
     }
 
     public function project(int $id)

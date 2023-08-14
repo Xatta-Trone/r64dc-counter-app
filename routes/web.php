@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CounterController;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Application;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,14 +17,9 @@ use Inertia\Inertia;
 |
 */
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', [CounterController::class, 'index']);
+Route::post('/projects', [CounterController::class, 'store'])->name('projects.store');
+Route::get('/projects-create', [CounterController::class, 'create'])->name('projects.create');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
