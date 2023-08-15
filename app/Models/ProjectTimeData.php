@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Project extends Model
+class ProjectTimeData extends Model
 {
     use HasFactory;
 
@@ -15,9 +15,13 @@ class Project extends Model
         'data' => 'array',
     ];
 
-    public function projectData()
+    public function project()
     {
-        return $this->hasMany(ProjectTimeData::class);
+        return $this->belongsTo(Project::class);
     }
-    
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
