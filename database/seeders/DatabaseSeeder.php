@@ -20,12 +20,14 @@ class DatabaseSeeder extends Seeder
             'name' => 'Monzurul ISLAM',
             'email' => 'monzurul.ce.buet@gmail.com',
             'password' => Hash::make('password'),
+            'is_admin' => true,
         ]);
 
         User::factory()->create([
             'name' => 'Sharif Ahmed',
             'email' => 'sharifahmedrafat@gmail.com',
             'password' => Hash::make('password'),
+            'is_admin' => true,
         ]);
 
         User::factory()->create([

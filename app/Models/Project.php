@@ -14,4 +14,25 @@ class Project extends Model
     protected $casts = [
         'data' => 'array',
     ];
+
+    public function projectData()
+    {
+        return $this->hasMany(ProjectTimeData::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // Get the first inserted child model
+    public function FirstProjectData()
+    {
+        return $this->hasOne(ProjectTimeData::class)->oldestOfMany();
+    }
+    public function lastProjectData()
+    {
+        return $this->hasOne(ProjectTimeData::class)->latestOfMany();
+    }
+
 }
