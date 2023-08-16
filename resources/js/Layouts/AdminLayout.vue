@@ -22,7 +22,7 @@
                                 Projects
                                 </Link>
                             </li>
-                            <li>
+                            <li v-if="$page.props.auth.user.is_admin">
                                 <Link :href="route('users.index')"
                                     class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-white duration-300 ease-in-out hover:bg-slate-600 dark:hover:bg-meta-4">
                                 <DashboardIcon />

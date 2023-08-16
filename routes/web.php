@@ -36,7 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects-count/{id}', [CounterController::class, 'count'])->name('projects.count');
     Route::get('/project-count-data/{id}', [CounterController::class, 'countData'])->name('projects.countData');
 
-    Route::resource('users', UserController::class);
+    Route::resource('users', UserController::class)->middleware(['admin']);
 
     Route::get('test', function () {
         $user = User::first();
