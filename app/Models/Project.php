@@ -25,4 +25,14 @@ class Project extends Model
         return $this->belongsTo(User::class);
     }
 
+    // Get the first inserted child model
+    public function FirstProjectData()
+    {
+        return $this->hasOne(ProjectTimeData::class)->oldestOfMany();
+    }
+    public function lastProjectData()
+    {
+        return $this->hasOne(ProjectTimeData::class)->latestOfMany();
+    }
+
 }

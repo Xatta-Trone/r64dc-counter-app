@@ -1,7 +1,7 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import { useForm } from '@inertiajs/vue3'
-import { reactive, ref, nextTick } from 'vue'
+import { reactive, ref, nextTick, onMounted } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
@@ -9,8 +9,25 @@ import '@vuepic/vue-datepicker/dist/main.css';
 
 
 
-defineProps({
-    'times': Array
+let props = defineProps({
+    'times': Array,
+    'project': Object,
+});
+
+
+onMounted(() => {
+    if (props.project) {
+        form.title = props.project.title;
+        form.intersection = props.project.intersection;
+        form.approach_name = props.project.approach_name;
+        form.weather_condition = props.project.weather_condition
+        form.day = new Date(props.project.day)
+        form.start_time = props.project.first_project_data.start_time
+        form.end_time = props.project.last_project_data.end_time
+        form.items = props.project.first_project_data.data.map(element => { return { ...element, left: 0, through: 0, right: 0 } })
+
+    }
+
 });
 
 const form = useForm({

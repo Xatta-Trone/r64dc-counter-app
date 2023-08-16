@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects', [CounterController::class, 'index'])->name('projects.index');
     Route::post('/projects', [CounterController::class, 'store'])->name('projects.store');
     Route::get('/projects-create', [CounterController::class, 'create'])->name('projects.create');
+    Route::get('/projects-duplicate/{id}', [CounterController::class, 'duplicate'])->name('projects.duplicate');
     Route::delete('/projects/{id}', [CounterController::class, 'delete'])->name('projects.delete');
     Route::get('/projects-slots/{id}', [CounterController::class, 'timeSlots'])->name('projects.slots');
     Route::get('/projects-count/{id}', [CounterController::class, 'count'])->name('projects.count');

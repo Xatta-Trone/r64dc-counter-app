@@ -47,6 +47,19 @@ class CounterController extends Controller
         return Inertia::render('Projects/Create', ['times' => $data]);
     }
 
+    public function duplicate(int $id)
+    {
+        $project = Project::with(['FirstProjectData', 'lastProjectData'])->findOrFail($id);
+
+        $c = CarbonPeriod::since('00:00')->minutes(5)->until('23:59')->toArray();
+
+        $data = [];
+        foreach ($c as $a) {
+            $data[] = $a->format('H:i');
+        }
+        return Inertia::render('Projects/Create', ['times' => $data, 'project' => $project]);
+    }
+
     public function store(CounterStoreRequest $request)
     {
         // dd($request->all(), Carbon::parse($request->day));
