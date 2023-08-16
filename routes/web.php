@@ -1,9 +1,13 @@
 <?php
 
-use App\Http\Controllers\CounterController;
+use App\Models\User;
 use Inertia\Inertia;
+use App\Mail\UserCreatedMail;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\CounterController;
 use App\Http\Controllers\ProfileController;
 
 /*
@@ -31,6 +35,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects-slots/{id}', [CounterController::class, 'timeSlots'])->name('projects.slots');
     Route::get('/projects-count/{id}', [CounterController::class, 'count'])->name('projects.count');
     Route::get('/project-count-data/{id}', [CounterController::class, 'countData'])->name('projects.countData');
+
+    Route::resource('users', UserController::class);
+
+    Route::get('test', function () {
+        $user = User::first();
+        Mail::to($user)->send(new UserCreatedMail($user, '$password'));
+    });
 
 
 

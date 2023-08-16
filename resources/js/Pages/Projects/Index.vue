@@ -6,12 +6,7 @@
             <div>
                 <Link :href="route('projects.create')"
                     class="flex items-center gap-2 text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                <svg class="fill-current" width="16" height="16" viewBox="0 0 16 16" fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M15 7H9V1C9 0.4 8.6 0 8 0C7.4 0 7 0.4 7 1V7H1C0.4 7 0 7.4 0 8C0 8.6 0.4 9 1 9H7V15C7 15.6 7.4 16 8 16C8.6 16 9 15.6 9 15V9H15C15.6 9 16 8.6 16 8C16 7.4 15.6 7 15 7Z"
-                        fill=""></path>
-                </svg>
+                <PlusIcon />
                 Create Project
                 </Link>
             </div>
@@ -114,6 +109,7 @@ import { Link } from "@inertiajs/vue3";
 import { ref, watch } from "vue";
 import { router } from '@inertiajs/vue3';
 import FlashMessageVue from "@/Shared/FlashMessage.vue";
+import PlusIcon from "@/Shared/Icons/PlusIcon.vue";
 
 defineProps({ projects: { type: Object } });
 
@@ -130,6 +126,6 @@ const deleteHandler = (id) => {
     router.delete(route('projects.delete', { id: id }), {
         onBefore: () => confirm('Are you sure you want to delete this project?'),
     });
-}
+};
 
 </script>
