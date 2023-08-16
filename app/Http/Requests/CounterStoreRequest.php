@@ -26,8 +26,10 @@ class CounterStoreRequest extends FormRequest
             'start_time' => 'date_format:H:i',
             'end_time' => 'date_format:H:i|after:start_time',
             'interval' => ['required','integer'],
-            
-
+            'day' => ['date'],
+            'intersection' => ['required', 'string'],
+            'approach_name' => ['required', 'string'],
+            'weather_condition' => ['required', 'string'],
         ];
     }
 }

@@ -19,5 +19,10 @@ class Project extends Model
     {
         return $this->hasMany(ProjectTimeData::class);
     }
-    
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
 }

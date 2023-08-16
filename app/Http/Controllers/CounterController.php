@@ -8,19 +8,23 @@ use App\Models\Project;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use App\Exports\ProjectsExport;
+use App\Models\ProjectTimeData;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Requests\CounterStoreRequest;
-use App\Models\ProjectTimeData;
 
 class CounterController extends Controller
 {
     public function index(Request $request)
     {
-        $projects = Project::Query()
-            ->withCount(['projectData'])
-            ->when($request->search, function ($q) use ($request) {
+        $projects = Project::Query()->withCount(['projectData',])->with(['user:id,name']);
+
+        if ($request->user()->is_admin == false) {
+            $projects = $projects->where('user_id', $request->user()->id);
+        }
+        $projects = $projects->when($request->search, function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%');
             })
             ->orderBy('id', 'desc')
@@ -45,6 +49,7 @@ class CounterController extends Controller
 
     public function store(CounterStoreRequest $request)
     {
+        // dd($request->all(), Carbon::parse($request->day));
         $c = CarbonPeriod::since($request->start_time)->minutes($request->interval)->until($request->end_time)->toArray();
 
         $projectData = [];
@@ -69,13 +74,24 @@ class CounterController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $projectData) {
-                $project = Project::create(['title' => $request->title]);
+
+            $data = [
+                'title' => $request->title,
+                'day' => Carbon::parse($request->day),
+                'intersection' => $request->intersection,
+                'approach_name' => $request->approach_name,
+                'weather_condition' => $request->weather_condition,
+                'user_id' => $request->user()->id,
+            ];
+
+
+            DB::transaction(function () use ($request, $projectData, $data) {
+                $project = Project::create($data);
                 $project->projectData()->createMany($projectData);
             });
-            return redirect()->route('home')->with('success', "Project Created.");
+            return redirect()->route('projects.index')->with('success', "Project Created.");
         } catch (Exception $e) {
-            return redirect()->route('home')->with('error', "Error creating project.");
+            return redirect()->back()->with('error', "Error creating project." . $e->getMessage());
         }
 
     }
@@ -110,7 +126,7 @@ class CounterController extends Controller
     public function delete(int $id)
     {
         $project = Project::findOrFail($id)->delete();
-        return redirect()->route('home')->with('success', "Project deleted.");
+        return redirect()->route('projects.index')->with('success', "Project deleted.");
     }
 
     public function view(int $id)

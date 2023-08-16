@@ -1,7 +1,41 @@
+
+<script  setup>
+import { Link } from "@inertiajs/vue3";
+import { ref, watch } from "vue";
+import { router } from '@inertiajs/vue3';
+import PlusIcon from "@/Shared/Icons/PlusIcon.vue";
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { Head } from '@inertiajs/vue3';
+import debounce from 'lodash/debounce'
+
+
+defineProps({ projects: { type: Object } });
+
+// handle search
+let search = ref("")
+
+watch(search, debounce((val) => {
+    console.log(val)
+    router.get(route('projects.index'), { search: val }, { preserveState: true, replace: true });
+
+},));
+
+const deleteHandler = (id) => {
+    router.delete(route('projects.delete', { id: id }), {
+        onBefore: () => confirm('Are you sure you want to delete this project?'),
+    });
+};
+
+</script>
+
 <template>
-    <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+    <Head title="Projects" />
+    <AdminLayout>
+        <!-- title -->
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="text-4xl font-bold text-black">Projects</h2>
+            <h2 class="text-2xl font-bold text-slate-600 dark:text-white">
+                Projects
+            </h2>
 
             <div>
                 <Link :href="route('projects.create')"
@@ -11,10 +45,9 @@
                 </Link>
             </div>
         </div>
-
-        <FlashMessageVue />
-
-        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <!-- table -->
+        <div class="bg-white shadow-sm px-2 py-3">
+            <!-- search bar  -->
             <div class="pb-4 bg-white dark:bg-gray-900 ml-3 mt-3">
                 <label for="table-search" class="sr-only">Search</label>
                 <div class="relative mt-1">
@@ -30,17 +63,33 @@
                         placeholder="Search for items">
                 </div>
             </div>
-            <table class="w-full text-md text-left text-gray-500 dark:text-gray-400">
+            <!-- table -->
+            <table class="w-full text-md text-left text-gray-500 dark:text-gray-400 overflow-x-auto">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                         <th scope="col" class="p-4">
-                            Id
+                            #
                         </th>
                         <th scope="col" class="px-6 py-3">
                             Project
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            Time slots (count)
+                            Slots
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Surveyor
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Day
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Intersection
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Approach
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Weather
                         </th>
                         <th scope="col" class="px-6 py-3">
                             Actions
@@ -48,10 +97,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="project in projects.data" :key="project.id"
+                    <tr v-for="(project, idx) in projects.data" :key="project.id"
                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                         <td class="w-4 p-4">
-                            {{ project.id }}
+                            {{ idx + 1 }}
                         </td>
                         <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             {{ project.title }}
@@ -60,12 +109,36 @@
                             {{ project.project_data_count }}
                         </td>
                         <td class="px-6 py-4">
+                            {{ project.user ? project.user.name : "" }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ project.day }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ project.intersection }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ project.approach_name }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ project.weather_condition }}
+                        </td>
+                        <td class="px-6 py-4">
                             <Link :href="`/projects-slots/${project.id}`"
-                                class="font-medium text-blue-600 dark:text-blue-500 hover:underline mx-2">View Time Slots</Link>
-                            <Link :href='route("projects.count",{id: project.id})'
-                                    class="font-medium text-blue-600 dark:text-blue-500 hover:underline mx-2">Counting Page</Link>
+                                class="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-1">Time
+                            Slots
+                            </Link>
+                            <Link :href='route("projects.count", { id: project.id })'
+                                class="font-medium text-green-600 dark:text-green-500 hover:underline mr-1">Counting page
+                            </Link>
+                            <Link :href='route("projects.count", { id: project.id })'
+                                class="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-1">Duplicate
+                            </Link>
+                            <Link :href='route("projects.count", { id: project.id })'
+                                class="font-medium text-zinc-600 dark:text-zinc-500 hover:underline mr-1">Export
+                            </Link>
                             <a href="#" @click.prevent="deleteHandler(project.id)"
-                                class="mx-1 font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
+                                class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
                         </td>
                     </tr>
 
@@ -79,6 +152,7 @@
 
                 </tbody>
             </table>
+            <!-- pagination -->
             <ul class="inline-flex -space-x-px text-base mt-3 mb-3 ml-3">
                 <li v-for="(link, i) in projects.links" :key="'link' + i">
                     <Link :href="link.url" v-if="link.url"
@@ -96,36 +170,9 @@
                     </span>
                 </li>
             </ul>
+
         </div>
 
 
-
-
-    </div>
+    </AdminLayout>
 </template>
-
-<script  setup>
-import { Link } from "@inertiajs/vue3";
-import { ref, watch } from "vue";
-import { router } from '@inertiajs/vue3';
-import FlashMessageVue from "@/Shared/FlashMessage.vue";
-import PlusIcon from "@/Shared/Icons/PlusIcon.vue";
-
-defineProps({ projects: { type: Object } });
-
-// handle search
-let search = ref("")
-
-watch(search, (val)=> {
-    console.log(val)
-    router.get('/', { search: val }, { preserveState: true, replace: true });
-
-});
-
-const deleteHandler = (id) => {
-    router.delete(route('projects.delete', { id: id }), {
-        onBefore: () => confirm('Are you sure you want to delete this project?'),
-    });
-};
-
-</script>

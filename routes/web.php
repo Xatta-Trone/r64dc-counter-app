@@ -24,11 +24,14 @@ use App\Http\Controllers\ProfileController;
 
 
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    return redirect()->route('index');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/', [CounterController::class, 'index'])->name('home');
+    Route::get('/', function () {
+        return Inertia::render('Dashboard');
+    })->name('index');
+    Route::get('/projects', [CounterController::class, 'index'])->name('projects.index');
     Route::post('/projects', [CounterController::class, 'store'])->name('projects.store');
     Route::get('/projects-create', [CounterController::class, 'create'])->name('projects.create');
     Route::delete('/projects/{id}', [CounterController::class, 'delete'])->name('projects.delete');
