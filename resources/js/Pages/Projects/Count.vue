@@ -40,16 +40,6 @@ const handleKeyPress = (e) => {
 
 }
 
-const toggleVideo = () => {
-    var videoNode = document.querySelector('video')
-    console.log(videoNode.paused)
-    if (videoNode.paused) {
-        videoNode.play();
-    } else {
-        videoNode.pause();
-    }
-
-};
 
 let currentSlotId = ref("");
 const handleChange = (e) => {
@@ -133,6 +123,40 @@ const handlePlaybackChange = (event) => {
 };
 
 
+// update the data
+let updating = ref(false);
+const updateCountData = () => {
+    console.log('updating....');
+    if (countData.value == null || updating.value == true) {
+        return
+    }
+    updating.value = true
+    axios.post(route("projects.updateCountData", { id: countData.value.id }), { data: countData.value.data })
+        .then(res => {
+            console.log(res.data)
+        })
+        .catch(err => {
+            console.log(err)
+            alert(err.response.data.msg)
+
+        })
+        .finally(() => { updating.value = false })
+
+};
+
+// interval
+let interval = ref()
+onMounted(() => {
+    interval = setInterval(() => {
+        updateCountData();
+    }, 1000 * 2 * 60 );
+});
+onUnmounted(() => {
+    clearInterval(interval);
+});
+
+
+
 
 </script>
 <template>
@@ -142,14 +166,9 @@ const handlePlaybackChange = (event) => {
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="text-4xl font-bold text-black">{{ project.title }}</h2>
             <div>
-                <button class="flex items-center gap-2 text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                <svg class="fill-current" width="16" height="16" viewBox="0 0 16 16" fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M15 7H9V1C9 0.4 8.6 0 8 0C7.4 0 7 0.4 7 1V7H1C0.4 7 0 7.4 0 8C0 8.6 0.4 9 1 9H7V15C7 15.6 7.4 16 8 16C8.6 16 9 15.6 9 15V9H15C15.6 9 16 8.6 16 8C16 7.4 15.6 7 15 7Z"
-                        fill=""></path>
-                </svg>
-                Save Data
+                <button @click.prevent="updateCountData" :disabled="updating"
+                    class="flex items-center gap-2 text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                    {{ updating ? "Updating...." : "Update Data" }}
                 </button>
             </div>
         </div>
@@ -187,8 +206,7 @@ const handlePlaybackChange = (event) => {
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5">
                         <option value="">Choose a time slot</option>
                         <option :value="slot.id" v-for="slot in project.project_data" :key="slot.id">{{ slot.start_time
-                        }}-{{ slot.end_time }} <span v-if="slot.user">Currently being counted by {{
-    slot.user?.name }}</span>
+                        }}-{{ slot.end_time }}
                         </option>
                     </select>
                     <FlashMessage />

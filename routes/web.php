@@ -38,6 +38,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects-slots/{id}', [CounterController::class, 'timeSlots'])->name('projects.slots');
     Route::get('/projects-count/{id}', [CounterController::class, 'count'])->name('projects.count');
     Route::get('/project-count-data/{id}', [CounterController::class, 'countData'])->name('projects.countData');
+    Route::post('/project-count-data/{id}', [CounterController::class, 'updateCountData'])->name('projects.updateCountData');
+    Route::get('/export/{id}', [CounterController::class, 'export'])->name('projects.export');
 
     Route::resource('users', UserController::class)->middleware(['admin']);
 

@@ -123,6 +123,17 @@ class CounterController extends Controller
         return response()->json(['data' => $project]);
     }
 
+    public function updateCountData(Request $request, int $id)
+    {
+        // dd($request->all());
+        try {
+            $projectData = ProjectTimeData::find($id)->update(['data' => $request->data]);
+            return response()->json(['msg' => 'Updated..']);
+        } catch (Exception $e) {
+            return response()->json(['msg' => 'Error' . $e->getMessage()], 400);
+        }
+    }
+
     public function delete(int $id)
     {
         $project = Project::findOrFail($id)->delete();
@@ -143,7 +154,7 @@ class CounterController extends Controller
 
     public function export(int $id)
     {
-        $project = Project::findOrFail($id);
+        $project = Project::with(['user', 'projectData'])->findOrFail($id);
         $slug = Str::slug($project->title);
         return Excel::download(new ProjectsExport($project), 'projects-' . $slug . '.xlsx');
     }

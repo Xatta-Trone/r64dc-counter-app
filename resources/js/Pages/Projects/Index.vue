@@ -134,9 +134,9 @@ const deleteHandler = (id) => {
                             <Link :href='route("projects.count", { id: project.id })'
                                 class="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-1">Duplicate
                             </Link>
-                            <Link :href='route("projects.count", { id: project.id })'
-                                class="font-medium text-zinc-600 dark:text-zinc-500 hover:underline mr-1">Export
-                            </Link>
+                                    <a :href='route("projects.export", { id: project.id })' target="_blank"
+                                    class="font-medium text-zinc-600 dark:text-zinc-500 hover:underline mr-1">Export
+                                </a>
                             <a href="#" @click.prevent="deleteHandler(project.id)"
                                 class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
                         </td>
