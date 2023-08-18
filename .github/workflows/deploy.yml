@@ -26,7 +26,7 @@ jobs:
           # sudo git commit -m "commit"
           cd /var/www/r64dc-counter-app
           sudo git config --global --add safe.directory /var/www/r64dc-counter-app
-          sudo git pull origin main
+          sudo git pull origin main --rebase
           sudo composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
           sudo php artisan migrate --force
           sudo npm ci
