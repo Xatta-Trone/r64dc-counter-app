@@ -5,7 +5,7 @@ import axios from "axios"
 import { Head } from '@inertiajs/vue3';
 
 
-defineProps({
+let props = defineProps({
     project: {
         type: Object,
     },
@@ -24,9 +24,13 @@ const handleKeyPress = (e) => {
     let key = e.key
 
     if (key != null || key != undefined || key != " ") {
-        // if (key == " ") {
-        //     return toggleVideo();
-        // }
+        if (key == "+") {
+            return changePlaybackSpeed(true);
+        }
+        if (key == "-") {
+            return changePlaybackSpeed(false);
+        }
+
 
         if (keyMap.value[key] != undefined) {
             let index = keyMap.value[key]
@@ -48,8 +52,33 @@ const handleChange = (e) => {
     } else {
         getCountData(e.target.value);
     }
+};
 
+const selectNextSlot = () => {
+    // current index
+    const currentSlot = currentSlotId.value;
+    console.log(currentSlot);
+    if (currentSlot == "") return;
+    const currentSlotIdx = props.project.project_data.findIndex((el) => el.id == currentSlot);
+    console.log(currentSlotIdx);
+    if (currentSlotIdx < props.project.project_data.length - 1) {
+        currentSlotId.value = props.project.project_data[currentSlotIdx + 1].id;
+        // update the data
+        getCountData(currentSlotId.value);
+    }
+};
 
+const selectPreviousSlot = () => {
+    // current index
+    const currentSlot = currentSlotId.value;
+    console.log(currentSlot);
+    const currentSlotIdx = props.project.project_data.findIndex((el) => el.id == currentSlot);
+    console.log(currentSlotIdx);
+    if (currentSlotIdx != 0 && (props.project.project_data.length) > 0 && currentSlotIdx <= (props.project.project_data.length - 1)) {
+        currentSlotId.value = props.project.project_data[currentSlotIdx - 1].id;
+        // update the data
+        getCountData(currentSlotId.value);
+    }
 };
 
 const clearData = () => {
@@ -92,34 +121,102 @@ const getCountData = (id) => {
 
 };
 
-let videoSource = ref(null)
+let videos = ref([]);
+let currentVideoIdx = ref(null);
 
 
 const getFileInputValue = (event) => {
-    console.log(event)
-    //get the file input value
-    const file = event.target.files[0];
-    var type = file.type
+    videos.value = [];
     var videoNode = document.querySelector('video')
-    var canPlay = videoNode.canPlayType(type)
+
+    console.log(event.target.files)
+
+    //get the file input value
+    for (let index = 0; index < event.target.files.length; index++) {
+        const file = event.target.files[index];
+        if (videoNode.canPlayType(file.type) != '') {
+            videos.value.push({
+                name: file.name,
+                src: URL.createObjectURL(file),
+                type: file.type
+            });
+        }
+
+    }
+
+    if (videos.value.length > 0) {
+        currentVideoIdx.value = 0;
+        playVideo(0);
+    }
+
+
+};
+
+const playNextVideo = () => {
+    // current index
+    let idx = currentVideoIdx.value;
+    if (idx < videos.value.length - 1) {
+        currentVideoIdx.value = currentVideoIdx.value + 1;
+        playVideo(currentVideoIdx.value);
+    }
+}
+
+const playPreviousVideo = () => {
+    // current index
+    let idx = currentVideoIdx.value;
+    if (idx != 0 && (videos.value.length) > 0 && idx <= (videos.value.length - 1)) {
+        currentVideoIdx.value = currentVideoIdx.value - 1;
+        playVideo(currentVideoIdx.value);
+    }
+}
+
+const playVideo = (index) => {
+    let videoFile = videos.value[index];
+    var videoNode = document.querySelector('video');
+    console.log(videoNode);
+    var canPlay = videoNode.canPlayType(videoFile.type)
     if (canPlay === '') {
         alert("can not play this video");
         return;
     }
 
-    var fileURL = URL.createObjectURL(file)
-    videoSource.value = fileURL
-    videoNode.playbackRate = 1
+    currentVideoIdx.value = index;
+    videoNode.pause();
+    videoNode.defaultPlaybackRate = parseInt(playbackSpeed.value);
+    videoNode.playbackRate = parseFloat(playbackSpeed.value)
     videoNode.play();
 
-};
+}
 
 // playback speed
-
-const handlePlaybackChange = (event) => {
+let playbackSpeed = ref(1)
+let playbackSpeeds = ref([1, 2, 4, 8, 16, 32]);
+const handlePlaybackChange = () => {
     var videoNode = document.querySelector('video')
-    videoNode.playbackRate = parseFloat(event.target.value)
-    videoNode.play();
+    const paused = videoNode.paused
+    videoNode.pause();
+    videoNode.defaultPlaybackRate = parseInt(playbackSpeed.value);
+    videoNode.playbackRate = parseFloat(playbackSpeed.value)
+    if (paused == false) {
+        videoNode.play();
+    }
+};
+
+const changePlaybackSpeed = (increase = true) => {
+    // find index
+    const idx = playbackSpeeds.value.indexOf(playbackSpeed.value);
+    const len = playbackSpeeds.value.length;
+
+    if (increase && idx < (len - 1)) {
+        playbackSpeed.value = playbackSpeeds.value[idx + 1];
+    }
+
+    if (!increase && idx > 0 && idx <= (len - 1)) {
+        playbackSpeed.value = playbackSpeeds.value[idx - 1];
+    }
+
+    handlePlaybackChange();
+
 };
 
 
@@ -144,18 +241,36 @@ const updateCountData = () => {
 
 };
 
+// update the data
+let resetting = ref(false);
+const resetData = () => {
+    console.log('updating....');
+
+    if (confirm("Are you sure, you want to reset data ?") == false) {
+        return;
+    }
+
+    if (countData.value == null || resetting.value == true) {
+        return
+    }
+    resetting.value = true
+    countData.value.data = countData.value.data.map(element => { return { ...element, left: 0, through: 0, right: 0 } });
+    resetting.value = false;
+
+    return alert("Now click Update data to save.");
+
+};
+
 // interval
 let interval = ref()
 onMounted(() => {
     interval = setInterval(() => {
         updateCountData();
-    }, 1000 * 2 * 60 );
+    }, 1000 * 2 * 60);
 });
 onUnmounted(() => {
     clearInterval(interval);
 });
-
-
 
 
 </script>
@@ -165,9 +280,13 @@ onUnmounted(() => {
         <Head title="Count" />
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="text-4xl font-bold text-black">{{ project.title }}</h2>
-            <div>
-                <button @click.prevent="updateCountData" :disabled="updating"
-                    class="flex items-center gap-2 text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+            <div class="flex flex-row">
+                <button @click.prevent="resetData" :disabled="resetting || countData == null"
+                    class="flex items-center gap-2 text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800 disabled:cursor-not-allowed">
+                    {{ resetting ? "Resetting...." : "Reset Data" }}
+                </button>
+                <button @click.prevent="updateCountData" :disabled="updating || countData == null"
+                    class="flex items-center gap-2 text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:cursor-not-allowed">
                     {{ updating ? "Updating...." : "Update Data" }}
                 </button>
             </div>
@@ -178,24 +297,31 @@ onUnmounted(() => {
                     file to play (.mp4)</label>
                 <input
                     class="block py-1.5 px-1 w-full text-lg text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                    id="file_input" type="file" @change="getFileInputValue" accept="video/mp4,video/x-m4v">
+                    id="file_input" type="file" @change="getFileInputValue" accept="video/mp4,video/x-m4v" multiple>
                 <br>
 
-                <div v-if="videoSource">
-                    <label for="playBackSpeed" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Video
+                <div class="inline-flex rounded-md shadow-sm float-right" role="group">
+                    <button type="button" @click.prevent="playPreviousVideo"
+                        :disabled="currentVideoIdx == null || currentVideoIdx == 0"
+                        class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-l-lg hover:bg-blue-500 hover:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                        Previous
+                    </button>
+
+                    <button type="button" @click.prevent="playNextVideo"
+                        :disabled="currentVideoIdx == null || currentVideoIdx == (videos.length - 1)"
+                        class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-r-md hover:bg-blue-500 hover:text-white  dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                        Next
+                    </button>
+                </div>
+                <br>
+
+                <div v-if="currentVideoIdx != null">
+                    <label for="playBackSpeed" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">Video
                         playback speed</label>
-                    <select id="playBackSpeed" @change="handlePlaybackChange"
+                    <select id="playBackSpeed" @change="handlePlaybackChange" v-model="playbackSpeed"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="1" selected>1x</option>
-                        <option value="1.5">1.5x</option>
-                        <option value="2">2x</option>
-                        <option value="2.5">2.5x</option>
-                        <option value="3">3x</option>
-                        <option value="3.5">3.5x</option>
-                        <option value="4">4x</option>
-                        <option value="4.5">4.5x</option>
-                        <option value="5">5x</option>
-                        <option value="10">10x</option>
+                        <option :value="speed" v-for="speed in playbackSpeeds" :key="`speed-${speed}`">{{ `${speed}x` }}
+                        </option>
                     </select>
                 </div>
 
@@ -210,6 +336,17 @@ onUnmounted(() => {
                         </option>
                     </select>
                     <FlashMessage />
+                    <div class="inline-flex rounded-md shadow-sm float-right mt-2" role="group">
+                        <button type="button" @click.prevent="selectPreviousSlot"
+                            class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-l-lg hover:bg-blue-500 hover:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                            Previous
+                        </button>
+
+                        <button type="button" @click.prevent="selectNextSlot"
+                            class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-r-md hover:bg-blue-500 hover:text-white  dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                            Next
+                        </button>
+                    </div>
                 </div>
 
                 <div class="mt-4" v-if="countData">
@@ -232,7 +369,9 @@ onUnmounted(() => {
 
             </div>
             <div class="w-1/2 px-2">
-                <video controls autoplay muted :src="videoSource"></video>
+                <video controls muted :src="videos[currentVideoIdx]?.src" class="w-full"></video>
+                <div class="mt-1">Current video: <span class="ml-2 text-blue-500">{{ videos[currentVideoIdx]?.name }}</span>
+                </div>
             </div>
 
         </div>

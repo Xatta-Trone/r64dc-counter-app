@@ -1,0 +1,34 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ "production" ]
+  # pull_request:
+  #   branches: [ "production" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Deploying
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        port: ${{ secrets.PORT }}
+        key: ${{ secrets.SSHKEY }}
+        script: |
+          sudo git checkout main
+          sudo git add .
+          sudo git commit -m "commit"
+          cd /var/www/r64dc-counter-app
+          sudo git config --global --add safe.directory /var/www/r64dc-counter-app
+          sudo git pull origin main
+          sudo composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+          sudo php artisan migrate --force
+          sudo npm ci
+          sudo npm run build
+          sudo php artisan optimize:clear
