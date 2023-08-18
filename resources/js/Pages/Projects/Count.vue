@@ -345,8 +345,8 @@ onUnmounted(() => {
 
             </div>
             <div class="w-1/2 px-2">
-                <video controls muted :src="videos[currentVideoIdx]?.src"></video>
-                <div>Current video: <span class="ml-2 text-blue-500">{{ videos[currentVideoIdx]?.name }}</span></div>
+                <video controls muted :src="videos[currentVideoIdx]?.src" class="w-full"></video>
+                <div class="mt-1">Current video: <span class="ml-2 text-blue-500">{{ videos[currentVideoIdx]?.name }}</span></div>
             </div>
 
         </div>
