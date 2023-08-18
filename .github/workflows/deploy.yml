@@ -21,9 +21,9 @@ jobs:
         port: ${{ secrets.PORT }}
         key: ${{ secrets.SSHKEY }}
         script: |
-          sudo git checkout main
-          sudo git add .
-          sudo git commit -m "commit"
+          # sudo git checkout main
+          # sudo git add .
+          # sudo git commit -m "commit"
           cd /var/www/r64dc-counter-app
           sudo git config --global --add safe.directory /var/www/r64dc-counter-app
           sudo git pull origin main
