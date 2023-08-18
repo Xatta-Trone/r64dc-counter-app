@@ -24,9 +24,13 @@ const handleKeyPress = (e) => {
     let key = e.key
 
     if (key != null || key != undefined || key != " ") {
-        // if (key == " ") {
-        //     return toggleVideo();
-        // }
+        if (key == "+") {
+            return changePlaybackSpeed(true);
+        }
+        if (key == "-") {
+            return changePlaybackSpeed(false);
+        }
+
 
         if (keyMap.value[key] != undefined) {
             let index = keyMap.value[key]
@@ -92,34 +96,102 @@ const getCountData = (id) => {
 
 };
 
-let videoSource = ref(null)
+let videos = ref([]);
+let currentVideoIdx = ref(null);
 
 
 const getFileInputValue = (event) => {
-    console.log(event)
-    //get the file input value
-    const file = event.target.files[0];
-    var type = file.type
+    videos.value = [];
     var videoNode = document.querySelector('video')
-    var canPlay = videoNode.canPlayType(type)
+
+    console.log(event.target.files)
+
+    //get the file input value
+    for (let index = 0; index < event.target.files.length; index++) {
+        const file = event.target.files[index];
+        if (videoNode.canPlayType(file.type) != '') {
+            videos.value.push({
+                name: file.name,
+                src: URL.createObjectURL(file),
+                type: file.type
+            });
+        }
+
+    }
+
+    if (videos.value.length > 0) {
+        currentVideoIdx.value = 0;
+        playVideo(0);
+    }
+
+
+};
+
+const playNextVideo = () => {
+    // current index
+    let idx = currentVideoIdx.value;
+    if (idx < videos.value.length - 1) {
+        currentVideoIdx.value = currentVideoIdx.value + 1;
+        playVideo(currentVideoIdx.value);
+    }
+}
+
+const playPreviousVideo = () => {
+    // current index
+    let idx = currentVideoIdx.value;
+    if (idx != 0 && (videos.value.length) > 0 && idx <= (videos.value.length - 1)) {
+        currentVideoIdx.value = currentVideoIdx.value - 1;
+        playVideo(currentVideoIdx.value);
+    }
+}
+
+const playVideo = (index) => {
+    let videoFile = videos.value[index];
+    var videoNode = document.querySelector('video');
+    console.log(videoNode);
+    var canPlay = videoNode.canPlayType(videoFile.type)
     if (canPlay === '') {
         alert("can not play this video");
         return;
     }
 
-    var fileURL = URL.createObjectURL(file)
-    videoSource.value = fileURL
-    videoNode.playbackRate = 1
+    currentVideoIdx.value = index;
+    videoNode.pause();
+    videoNode.defaultPlaybackRate = parseInt(playbackSpeed.value);
+    videoNode.playbackRate = parseFloat(playbackSpeed.value)
     videoNode.play();
 
-};
+}
 
 // playback speed
-
-const handlePlaybackChange = (event) => {
+let playbackSpeed = ref(1)
+let playbackSpeeds = ref([1, 2, 4, 8, 16, 32]);
+const handlePlaybackChange = () => {
     var videoNode = document.querySelector('video')
-    videoNode.playbackRate = parseFloat(event.target.value)
-    videoNode.play();
+    const paused = videoNode.paused
+    videoNode.pause();
+    videoNode.defaultPlaybackRate = parseInt(playbackSpeed.value);
+    videoNode.playbackRate = parseFloat(playbackSpeed.value)
+    if (paused == false) {
+        videoNode.play();
+    }
+};
+
+const changePlaybackSpeed = (increase = true) => {
+    // find index
+    const idx = playbackSpeeds.value.indexOf(playbackSpeed.value);
+    const len = playbackSpeeds.value.length;
+
+    if (increase && idx < (len - 1)) {
+        playbackSpeed.value = playbackSpeeds.value[idx + 1];
+    }
+
+    if (!increase && idx > 0 && idx <= (len - 1)) {
+        playbackSpeed.value = playbackSpeeds.value[idx - 1];
+    }
+
+    handlePlaybackChange();
+
 };
 
 
@@ -149,13 +221,11 @@ let interval = ref()
 onMounted(() => {
     interval = setInterval(() => {
         updateCountData();
-    }, 1000 * 2 * 60 );
+    }, 1000 * 2 * 60);
 });
 onUnmounted(() => {
     clearInterval(interval);
 });
-
-
 
 
 </script>
@@ -178,61 +248,69 @@ onUnmounted(() => {
                     file to play (.mp4)</label>
                 <input
                     class="block py-1.5 px-1 w-full text-lg text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                    id="file_input" type="file" @change="getFileInputValue" accept="video/mp4,video/x-m4v">
-                <br>
+                                    id="file_input" type="file" @change="getFileInputValue" accept="video/mp4,video/x-m4v" multiple>
+                            <br>
 
-                <div v-if="videoSource">
-                    <label for="playBackSpeed" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Video
-                        playback speed</label>
-                    <select id="playBackSpeed" @change="handlePlaybackChange"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="1" selected>1x</option>
-                        <option value="1.5">1.5x</option>
-                        <option value="2">2x</option>
-                        <option value="2.5">2.5x</option>
-                        <option value="3">3x</option>
-                        <option value="3.5">3.5x</option>
-                        <option value="4">4x</option>
-                        <option value="4.5">4.5x</option>
-                        <option value="5">5x</option>
-                        <option value="10">10x</option>
-                    </select>
-                </div>
+                                <div class="inline-flex rounded-md shadow-sm float-right" role="group">
+                                    <button type="button" @click.prevent="playPreviousVideo"
+                                        :disabled="currentVideoIdx == null || currentVideoIdx == 0"
+                                        class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-l-lg hover:bg-blue-500 hover:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                                        Previous
+                                    </button>
 
-                <div class="mt-4">
-                    <label for="countries" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">Select a
-                        time slot to work on</label>
-                    <select id="countries" v-model="currentSlotId" @change="handleChange"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5">
-                        <option value="">Choose a time slot</option>
-                        <option :value="slot.id" v-for="slot in project.project_data" :key="slot.id">{{ slot.start_time
-                        }}-{{ slot.end_time }}
-                        </option>
-                    </select>
-                    <FlashMessage />
-                </div>
+                                    <button type="button" @click.prevent="playNextVideo"
+                                        :disabled="currentVideoIdx == null || currentVideoIdx == (videos.length - 1)"
+                                        class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-r-md hover:bg-blue-500 hover:text-white  dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                                        Next
+                                    </button>
+                                </div>
+                                <br>
 
-                <div class="mt-4" v-if="countData">
-                    <h2 class="grow-0 text-2xl font-bold text-black">Time Slot: {{ countData.start_time }}-{{
-                        countData.end_time }}
-                    </h2>
-                    <h2 class="grow-0 text-2xl font-bold text-black my-2"> Select current side</h2>
-                    <div class="flex w-full">
-                        <div v-for="side in sides" :key="side"
-                            class="flex w-full items-center pl-4 border border-gray-200 rounded ml-3 px-2">
-                            <input v-model="currentSide" type="radio" name="side" :id="`side-${side}`" :value="side"
-                                class=" text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-                            <label :for="`side-${side}`"
-                                class="w-full py-2 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ side
-                                }}</label>
+                                <div v-if="currentVideoIdx != null">
+                            <label for="playBackSpeed" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Video
+                                playback speed</label>
+                                    <select id="playBackSpeed" @change="handlePlaybackChange" v-model="playbackSpeed"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                        <option :value="speed" v-for="speed in playbackSpeeds" :key="`speed-${speed}`">{{ `${speed}x` }}
+                                        </option>
+                            </select>
                         </div>
+
+                        <div class="mt-4">
+                            <label for="countries" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">Select a
+                                time slot to work on</label>
+                            <select id="countries" v-model="currentSlotId" @change="handleChange"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5">
+                                <option value="">Choose a time slot</option>
+                                <option :value="slot.id" v-for="slot in project.project_data" :key="slot.id">{{ slot.start_time
+                                }}-{{ slot.end_time }}
+                                </option>
+                            </select>
+                            <FlashMessage />
+                        </div>
+
+                        <div class="mt-4" v-if="countData">
+                            <h2 class="grow-0 text-2xl font-bold text-black">Time Slot: {{ countData.start_time }}-{{
+                                countData.end_time }}
+                            </h2>
+                            <h2 class="grow-0 text-2xl font-bold text-black my-2"> Select current side</h2>
+                            <div class="flex w-full">
+                                <div v-for="side in sides" :key="side"
+                                    class="flex w-full items-center pl-4 border border-gray-200 rounded ml-3 px-2">
+                                    <input v-model="currentSide" type="radio" name="side" :id="`side-${side}`" :value="side"
+                                        class=" text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                                    <label :for="`side-${side}`"
+                                        class="w-full py-2 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ side
+                                        }}</label>
+                                </div>
+                            </div>
+
+                        </div>
+
                     </div>
-
-                </div>
-
-            </div>
-            <div class="w-1/2 px-2">
-                <video controls autoplay muted :src="videoSource"></video>
+                    <div class="w-1/2 px-2">
+                            <video controls muted :src="videos[currentVideoIdx]?.src"></video>
+                            <div>Current video: <span class="ml-2 text-blue-500">{{ videos[currentVideoIdx]?.name }}</span></div>
             </div>
 
         </div>
