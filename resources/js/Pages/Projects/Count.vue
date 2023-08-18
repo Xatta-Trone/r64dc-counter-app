@@ -5,7 +5,7 @@ import axios from "axios"
 import { Head } from '@inertiajs/vue3';
 
 
-defineProps({
+let props = defineProps({
     project: {
         type: Object,
     },
@@ -52,8 +52,33 @@ const handleChange = (e) => {
     } else {
         getCountData(e.target.value);
     }
+};
 
+const selectNextSlot = () => {
+    // current index
+    const currentSlot = currentSlotId.value;
+    console.log(currentSlot);
+    if (currentSlot == "") return ;
+    const currentSlotIdx = props.project.project_data.findIndex((el) => el.id == currentSlot);
+    console.log(currentSlotIdx);
+    if (currentSlotIdx < props.project.project_data.length - 1) {
+        currentSlotId.value = props.project.project_data[currentSlotIdx + 1].id;
+        // update the data
+        getCountData(currentSlotId.value);
+    }
+};
 
+const selectPreviousSlot = () => {
+    // current index
+    const currentSlot = currentSlotId.value;
+    console.log(currentSlot);
+    const currentSlotIdx = props.project.project_data.findIndex((el) => el.id == currentSlot);
+    console.log(currentSlotIdx);
+    if (currentSlotIdx != 0 && (props.project.project_data.length) > 0 && currentSlotIdx <= (props.project.project_data.length - 1)) {
+        currentSlotId.value = props.project.project_data[currentSlotIdx - 1].id;
+        // update the data
+        getCountData(currentSlotId.value);
+    }
 };
 
 const clearData = () => {
@@ -248,69 +273,80 @@ onUnmounted(() => {
                     file to play (.mp4)</label>
                 <input
                     class="block py-1.5 px-1 w-full text-lg text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                                    id="file_input" type="file" @change="getFileInputValue" accept="video/mp4,video/x-m4v" multiple>
-                            <br>
+                    id="file_input" type="file" @change="getFileInputValue" accept="video/mp4,video/x-m4v" multiple>
+                <br>
 
-                                <div class="inline-flex rounded-md shadow-sm float-right" role="group">
-                                    <button type="button" @click.prevent="playPreviousVideo"
-                                        :disabled="currentVideoIdx == null || currentVideoIdx == 0"
-                                        class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-l-lg hover:bg-blue-500 hover:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
-                                        Previous
-                                    </button>
+                <div class="inline-flex rounded-md shadow-sm float-right" role="group">
+                    <button type="button" @click.prevent="playPreviousVideo"
+                        :disabled="currentVideoIdx == null || currentVideoIdx == 0"
+                        class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-l-lg hover:bg-blue-500 hover:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                        Previous
+                    </button>
 
-                                    <button type="button" @click.prevent="playNextVideo"
-                                        :disabled="currentVideoIdx == null || currentVideoIdx == (videos.length - 1)"
-                                        class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-r-md hover:bg-blue-500 hover:text-white  dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
-                                        Next
-                                    </button>
-                                </div>
-                                <br>
+                    <button type="button" @click.prevent="playNextVideo"
+                        :disabled="currentVideoIdx == null || currentVideoIdx == (videos.length - 1)"
+                        class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-r-md hover:bg-blue-500 hover:text-white  dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                        Next
+                    </button>
+                </div>
+                <br>
 
-                                <div v-if="currentVideoIdx != null">
-                            <label for="playBackSpeed" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Video
-                                playback speed</label>
-                                    <select id="playBackSpeed" @change="handlePlaybackChange" v-model="playbackSpeed"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                        <option :value="speed" v-for="speed in playbackSpeeds" :key="`speed-${speed}`">{{ `${speed}x` }}
-                                        </option>
-                            </select>
-                        </div>
+                <div v-if="currentVideoIdx != null">
+                    <label for="playBackSpeed" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Video
+                        playback speed</label>
+                    <select id="playBackSpeed" @change="handlePlaybackChange" v-model="playbackSpeed"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <option :value="speed" v-for="speed in playbackSpeeds" :key="`speed-${speed}`">{{ `${speed}x` }}
+                        </option>
+                    </select>
+                </div>
 
-                        <div class="mt-4">
-                            <label for="countries" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">Select a
-                                time slot to work on</label>
-                            <select id="countries" v-model="currentSlotId" @change="handleChange"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5">
-                                <option value="">Choose a time slot</option>
-                                <option :value="slot.id" v-for="slot in project.project_data" :key="slot.id">{{ slot.start_time
-                                }}-{{ slot.end_time }}
-                                </option>
-                            </select>
-                            <FlashMessage />
-                        </div>
+                <div class="mt-4">
+                    <label for="countries" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">Select a
+                        time slot to work on</label>
+                    <select id="countries" v-model="currentSlotId" @change="handleChange"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5">
+                        <option value="">Choose a time slot</option>
+                        <option :value="slot.id" v-for="slot in project.project_data" :key="slot.id">{{ slot.start_time
+                        }}-{{ slot.end_time }}
+                        </option>
+                    </select>
+                    <FlashMessage />
+                    <div class="inline-flex rounded-md shadow-sm float-right mt-2" role="group">
+                        <button type="button" @click.prevent="selectPreviousSlot"
+                            class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-l-lg hover:bg-blue-500 hover:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                            Previous
+                        </button>
 
-                        <div class="mt-4" v-if="countData">
-                            <h2 class="grow-0 text-2xl font-bold text-black">Time Slot: {{ countData.start_time }}-{{
-                                countData.end_time }}
-                            </h2>
-                            <h2 class="grow-0 text-2xl font-bold text-black my-2"> Select current side</h2>
-                            <div class="flex w-full">
-                                <div v-for="side in sides" :key="side"
-                                    class="flex w-full items-center pl-4 border border-gray-200 rounded ml-3 px-2">
-                                    <input v-model="currentSide" type="radio" name="side" :id="`side-${side}`" :value="side"
-                                        class=" text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-                                    <label :for="`side-${side}`"
-                                        class="w-full py-2 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ side
-                                        }}</label>
-                                </div>
-                            </div>
-
-                        </div>
-
+                        <button type="button" @click.prevent="selectNextSlot"
+                            class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-r-md hover:bg-blue-500 hover:text-white  dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                            Next
+                        </button>
                     </div>
-                    <div class="w-1/2 px-2">
-                            <video controls muted :src="videos[currentVideoIdx]?.src"></video>
-                            <div>Current video: <span class="ml-2 text-blue-500">{{ videos[currentVideoIdx]?.name }}</span></div>
+                </div>
+
+                <div class="mt-4" v-if="countData">
+                    <h2 class="grow-0 text-2xl font-bold text-black">Time Slot: {{ countData.start_time }}-{{
+                        countData.end_time }}
+                    </h2>
+                    <h2 class="grow-0 text-2xl font-bold text-black my-2"> Select current side</h2>
+                    <div class="flex w-full">
+                        <div v-for="side in sides" :key="side"
+                            class="flex w-full items-center pl-4 border border-gray-200 rounded ml-3 px-2">
+                            <input v-model="currentSide" type="radio" name="side" :id="`side-${side}`" :value="side"
+                                class=" text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                            <label :for="`side-${side}`"
+                                class="w-full py-2 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ side
+                                }}</label>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <div class="w-1/2 px-2">
+                <video controls muted :src="videos[currentVideoIdx]?.src"></video>
+                <div>Current video: <span class="ml-2 text-blue-500">{{ videos[currentVideoIdx]?.name }}</span></div>
             </div>
 
         </div>
