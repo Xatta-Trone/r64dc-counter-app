@@ -93,7 +93,6 @@ let countData = ref(null);
 const sides = ['left', 'through', 'right'];
 let currentSide = ref('left');
 let keyMap = ref({});
-const plyr = ref(null);
 
 
 const getCountData = (id) => {
@@ -118,6 +117,16 @@ const getCountData = (id) => {
             countData.value = null
         })
         .finally(() => { loading.value = false })
+
+};
+
+// update countData
+const handleUpdateCount = (index, increment = false) => {
+    if (increment) {
+        countData.value.data[index][currentSide.value] = countData.value.data[index][currentSide.value] + 1;
+    } else {
+        countData.value.data[index][currentSide.value] = countData.value.data[index][currentSide.value] == 0 ? 0 : countData.value.data[index][currentSide.value] - 1;
+    }
 
 };
 
@@ -388,22 +397,35 @@ onUnmounted(() => {
 
             <div v-if="countData">
                 <div class="grid gap-3 grid-cols-5" v-if="countData != null">
-                    <div class="inline-flex rounded-md " role="group" v-for="(item, i) in countData.data" :key="item.id">
-                        <span
-                            class="px-4 py-2 grow text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-l-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
-                            {{ item.title }}
-                        </span>
-                        <span
-                            class="px-4 py-2 text-md font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
+                    <div v-for="(item, i) in countData.data" :key="item.id" class="flex flex-col">
+                        <div class="inline-flex rounded-md " role="group">
+                            <span
+                                class="px-4 py-2 grow text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-tl-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
+                                {{ item.title }}
+                            </span>
+                            <span
+                                class="px-4 py-2 text-md font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
 
-                            <kbd
-                                class="px-2 py-1.5 text-md font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">{{
-                                    item.key }}</kbd>
-                        </span>
-                        <span
-                            class="px-4 py-2 text-md font-medium text-gray-900 bg-white border border-gray-200 rounded-r-md hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
-                            {{ countData.data[i][currentSide] }}
-                        </span>
+                                <kbd
+                                    class="px-2 py-1.5 text-md font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">{{
+                                        item.key }}</kbd>
+                            </span>
+                            <span
+                                class="px-4 py-2 text-md font-medium text-gray-900 bg-white border border-gray-200 rounded-tr-md hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
+                                {{ countData.data[i][currentSide] }}
+                            </span>
+                        </div>
+                        <div class="inline-flex rounded-md " role="group">
+                            <span @click.prevent="handleUpdateCount(i,true)"
+                                class="px-4 py-2 grow text-lg font-medium text-center text-gray-900 bg-white border border-gray-200 rounded-bl-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white cursor-pointer">
+                                +
+                            </span>
+
+                            <span  @click.prevent="handleUpdateCount(i, false)"
+                                class="px-4 py-2 grow text-lg text-center font-medium text-gray-900 bg-white border border-gray-200 rounded-br-md hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white cursor-pointer">
+                                -
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
