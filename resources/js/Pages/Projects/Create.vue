@@ -25,7 +25,7 @@ onMounted(() => {
         form.start_time = props.project.first_project_data.start_time
         form.end_time = props.project.last_project_data.end_time
         form.items = props.project.first_project_data.data.map(element => { return { ...element, left: 0, through: 0, right: 0 } })
-
+        updateKeyMap();
     }
 
 });
@@ -96,8 +96,8 @@ function handleKeyInput(e) {
         return alert("Could not add this key");
     }
 
-    if (key == " ") {
-        return alert("Space key is preserved for video play/pause. Please choose other key.");
+    if (key == " " || key == "+" || key == "-") {
+        return alert("Space, + and - key is preserved for video play/pause/playback speed. Please choose other key.");
     }
 
     if (currentIdx.value == "") {
@@ -105,6 +105,7 @@ function handleKeyInput(e) {
 
     }
 
+    updateKeyMap();
 
     if (handleKeys.value.indexOf(key) != -1) {
         alert(`${key} is already under use. Please choose a different one.`);
@@ -120,6 +121,15 @@ function handleKeyInput(e) {
         }
 
     }
+}
+
+const updateKeyMap = () => {
+    handleKeys.value = [];
+    for (let index = 0; index < form.items.length; index++) {
+        const item = form.items[index];
+        handleKeys.value.push(item.key)
+    }
+
 }
 
 // handle delete
