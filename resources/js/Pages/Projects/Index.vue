@@ -152,7 +152,7 @@ const forceDeleteHandler = (id, force = false) => {
                             <a :href='route("projects.export", { id: project.id })' target="_blank"
                                 class="font-medium text-zinc-600 dark:text-zinc-500 hover:underline mr-1">Export
                             </a>
-                            <a href="#" @click.prevent="deleteHandler(project.id)" v-if="project.deleted_at != undefined && project.deleted_at== null"
+                            <a href="#" @click.prevent="deleteHandler(project.id)" v-if="project.deleted_at == null"
                                 class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
                             <a href="#" @click.prevent="forceDeleteHandler(project.id, true)" v-if="project.deleted_at != undefined && project.deleted_at != null"
                                     class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Force Delete</a>
