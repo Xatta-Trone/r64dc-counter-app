@@ -20,9 +20,15 @@ watch(search, debounce((val) => {
 
 },));
 
-const deleteHandler = (id) => {
-    router.delete(route('projects.delete', { id: id }), {
+const deleteHandler = (id, force = false) => {
+    router.delete(route('projects.delete', { id: id, force: force }), {
         onBefore: () => confirm('Are you sure you want to delete this project?'),
+    });
+};
+
+const forceDeleteHandler = (id, force = false) => {
+    router.delete(route('projects.delete', { id: id, force: force }), {
+        onBefore: () => confirm('Are you sure you want to permanently delete this project?'),
     });
 };
 
@@ -91,6 +97,9 @@ const deleteHandler = (id) => {
                         <th scope="col" class="px-6 py-3">
                             Weather
                         </th>
+                        <th scope="col" class="px-6 py-3" v-show="$page.props.auth.user.is_admin">
+                            Deleted
+                        </th>
                         <th scope="col" class="px-6 py-3">
                             Actions
                         </th>
@@ -123,6 +132,12 @@ const deleteHandler = (id) => {
                         <td class="px-6 py-4">
                             {{ project.weather_condition }}
                         </td>
+                        <td class="px-6 py-3" v-show="$page.props.auth.user.is_admin">
+                            <span v-if="project.deleted_at != null"
+                                class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Yes</span>
+                            <span v-else
+                                class="bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">No</span>
+                        </td>
                         <td class="px-6 py-4">
                             <Link :href="`/projects-slots/${project.id}`"
                                 class="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-1">Time
@@ -131,14 +146,16 @@ const deleteHandler = (id) => {
                             <Link :href='route("projects.count", { id: project.id })'
                                 class="font-medium text-green-600 dark:text-green-500 hover:underline mr-1">Counting page
                             </Link>
-                                <Link :href='route("projects.duplicate", { id: project.id })'
+                            <Link :href='route("projects.duplicate", { id: project.id })'
                                 class="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-1">Duplicate
                             </Link>
-                                    <a :href='route("projects.export", { id: project.id })' target="_blank"
-                                    class="font-medium text-zinc-600 dark:text-zinc-500 hover:underline mr-1">Export
-                                </a>
-                            <a href="#" @click.prevent="deleteHandler(project.id)"
+                            <a :href='route("projects.export", { id: project.id })' target="_blank"
+                                class="font-medium text-zinc-600 dark:text-zinc-500 hover:underline mr-1">Export
+                            </a>
+                            <a href="#" @click.prevent="deleteHandler(project.id)" v-if="project.deleted_at != undefined && project.deleted_at== null"
                                 class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
+                            <a href="#" @click.prevent="forceDeleteHandler(project.id, true)" v-if="project.deleted_at != undefined && project.deleted_at != null"
+                                    class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Force Delete</a>
                         </td>
                     </tr>
 

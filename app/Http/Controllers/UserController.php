@@ -20,7 +20,12 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        if ($request->user()->is_admin == false) {
+            abort(403);
+        }
+
         $users = User::Query()
+            ->withTrashed()
             ->when($request->search, function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')->orWhere('email', 'like', '%' . $request->search . '%');
             })
@@ -47,6 +52,10 @@ class UserController extends Controller
      */
     public function store(UserCreateRequest $request)
     {
+        if ($request->user()->is_admin == false) {
+            abort(403);
+        }
+
         try {
             $password = Str::random(10);
             $user = User::create($request->validated() + ['password' => Hash::make($password)]);
@@ -81,6 +90,10 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, string $id)
     {
+        if ($request->user()->is_admin == false) {
+            abort(403);
+        }
+
         try {
             $user = User::findOrFail($id);
             $user->update($request->validated());
@@ -94,9 +107,19 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        User::findOrFail($id)->delete();
+        if ($request->user()->is_admin == false) {
+            abort(403);
+        }
+
+        if ($request->force) {
+            User::withTrashed()->findOrFail($id)->forceDelete();
+        } else {
+            User::findOrFail($id)->delete();
+        }
+
+
         return redirect()->route('users.index')->with('success', 'User Deleted.');
     }
 }
