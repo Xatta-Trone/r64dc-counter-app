@@ -96,6 +96,10 @@ let keyMap = ref({});
 
 
 const getCountData = (id) => {
+    // save the current data
+    updateCountData();
+
+    // proceed to the next data
     loading.value = true
     clearData();
     console.log(id);
@@ -263,7 +267,13 @@ const resetData = () => {
         return
     }
     resetting.value = true
-    countData.value.data = countData.value.data.map(element => { return { ...element, left: 0, through: 0, right: 0 } });
+    let changedData = countData.value.data.map(element => {
+        let e = { ...element };
+        e[currentSide.value] = 0
+        return e;
+    });
+    countData.value.data = changedData;
+    console.log(changedData);
     resetting.value = false;
 
     return alert("Now click Update data to save.");
@@ -275,12 +285,11 @@ let interval = ref()
 onMounted(() => {
     interval = setInterval(() => {
         updateCountData();
-    }, 1000 * 2 * 60);
+    }, 1000 * 30);
 });
 onUnmounted(() => {
     clearInterval(interval);
 });
-
 
 </script>
 <template>
@@ -290,138 +299,146 @@ onUnmounted(() => {
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="text-4xl font-bold text-black">{{ project.title }}</h2>
             <div class="flex flex-row">
-                <button @click.prevent="resetData" :disabled="resetting || countData == null"
-                    class="flex items-center gap-2 text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800 disabled:cursor-not-allowed">
-                    {{ resetting ? "Resetting...." : "Reset Data" }}
-                </button>
-                <button @click.prevent="updateCountData" :disabled="updating || countData == null"
-                    class="flex items-center gap-2 text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:cursor-not-allowed">
-                    {{ updating ? "Updating...." : "Update Data" }}
-                </button>
-            </div>
-        </div>
-        <div class="flex border rounded-lg px-2 py-4 my-4 shadow-lg">
-            <div class="w-1/2">
-                <label class="block mb-2 text-md font-medium text-gray-900 dark:text-white" for="file_input">Select Video
-                    file to play (.mp4)</label>
-                <input
-                    class="block py-1.5 px-1 w-full text-lg text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                    id="file_input" type="file" @change="getFileInputValue" accept="video/mp4,video/x-m4v" multiple>
-                <br>
+                                                    <a :href='route("projects.export", { id: project.id })' target="_blank"
+                                                        class="flex items-center gap-2 text-white bg-zinc-700 hover:bg-zinc-800 focus:outline-none focus:ring-4 focus:ring-zinc-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-zinc-600 dark:hover:bg-zinc-700 dark:focus:ring-zinc-800 disabled:cursor-not-allowed">
+                                                        Export data
+                                                    </a>
+                                                <button @click.prevent="resetData" :disabled="resetting || countData == null"
+                                                    class="flex items-center gap-2 text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800 disabled:cursor-not-allowed">
+                                                    {{ resetting ? "Resetting...." : "Reset Data" }}
+                                                </button>
+                                                <button @click.prevent="updateCountData" :disabled="updating || countData == null"
+                                                    class="flex items-center gap-2 text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:cursor-not-allowed">
+                                                    {{ updating ? "Updating...." : "Update Data" }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="flex border rounded-lg px-2 py-4 my-4 shadow-lg">
+                                            <div class="w-1/2">
+                                                <label class="block mb-2 text-md font-medium text-gray-900 dark:text-white" for="file_input">Select Video
+                                                    file to play (.mp4)</label>
+                                                <input
+                                                    class="block py-1.5 px-1 w-full text-lg text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                                                    id="file_input" type="file" @change="getFileInputValue" accept="video/mp4,video/x-m4v" multiple>
+                                                <br>
 
-                <div class="inline-flex rounded-md shadow-sm float-right" role="group">
-                    <button type="button" @click.prevent="playPreviousVideo"
-                        :disabled="currentVideoIdx == null || currentVideoIdx == 0"
-                        class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-l-lg hover:bg-blue-500 hover:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
-                        Previous
-                    </button>
+                                                        <div class="inline-flex rounded-md shadow-sm float-right" role="group">
+                                                            <button type="button" @click.prevent="playPreviousVideo"
+                                                                :disabled="currentVideoIdx == null || currentVideoIdx == 0"
+                                                                class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-l-lg hover:bg-blue-500 hover:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                                                                Previous
+                                                            </button>
 
-                    <button type="button" @click.prevent="playNextVideo"
-                        :disabled="currentVideoIdx == null || currentVideoIdx == (videos.length - 1)"
-                        class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-r-md hover:bg-blue-500 hover:text-white  dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
-                        Next
-                    </button>
-                </div>
-                <br>
+                                                            <button type="button" @click.prevent="playNextVideo"
+                                                                :disabled="currentVideoIdx == null || currentVideoIdx == (videos.length - 1)"
+                                                                class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-r-md hover:bg-blue-500 hover:text-white  dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                                                                Next
+                                                            </button>
+                                                        </div>
+                                                        <br>
 
-                <div v-if="currentVideoIdx != null">
-                    <label for="playBackSpeed" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">Video
-                        playback speed</label>
-                    <select id="playBackSpeed" @change="handlePlaybackChange" v-model="playbackSpeed"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option :value="speed" v-for="speed in playbackSpeeds" :key="`speed-${speed}`">{{ `${speed}x` }}
-                        </option>
-                    </select>
-                </div>
+                                                        <div v-if="currentVideoIdx != null">
+                                                            <label for="playBackSpeed" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">Video
+                                                                playback speed</label>
+                                                            <select id="playBackSpeed" @change="handlePlaybackChange" v-model="playbackSpeed"
+                                                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                                                <option :value="speed" v-for="speed in playbackSpeeds" :key="`speed-${speed}`">{{ `${speed}x` }}
+                                                                </option>
+                                                            </select>
+                                                        </div>
 
-                <div class="mt-4">
-                    <label for="countries" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">Select a
-                        time slot to work on</label>
-                    <select id="countries" v-model="currentSlotId" @change="handleChange"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5">
-                        <option value="">Choose a time slot</option>
-                        <option :value="slot.id" v-for="slot in project.project_data" :key="slot.id">{{ slot.start_time
-                        }}-{{ slot.end_time }}
-                        </option>
-                    </select>
-                    <FlashMessage />
-                    <div class="inline-flex rounded-md shadow-sm float-right mt-2" role="group">
-                        <button type="button" @click.prevent="selectPreviousSlot"
-                            class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-l-lg hover:bg-blue-500 hover:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
-                            Previous
-                        </button>
+                                                        <div class="mt-4">
+                                                            <label for="countries" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">Select a
+                                                                time slot to work on</label>
+                                                            <select id="countries" v-model="currentSlotId" @change="handleChange"
+                                                                class="bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1.5">
+                                                                <option value="">Choose a time slot</option>
+                                                                <option :value="slot.id" v-for="slot in project.project_data" :key="slot.id">{{ slot.start_time
+                                                                }}-{{ slot.end_time }}
+                                                                </option>
+                                                            </select>
+                                                            <FlashMessage />
+                                                            <div class="inline-flex rounded-md shadow-sm float-right mt-2" role="group">
+                                                                <button type="button" @click.prevent="selectPreviousSlot"
+                                                                    class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-l-lg hover:bg-blue-500 hover:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                                                                    Previous
+                                                                </button>
 
-                        <button type="button" @click.prevent="selectNextSlot"
-                            class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-r-md hover:bg-blue-500 hover:text-white  dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
-                            Next
-                        </button>
-                    </div>
-                </div>
+                                                                <button type="button" @click.prevent="selectNextSlot"
+                                                                    class="px-4 py-2 text-xs font-medium text-blue-500 bg-transparent border border-blue-500 rounded-r-md hover:bg-blue-500 hover:text-white  dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-blue-700 dark:focus:bg-blue-700 disabled:cursor-not-allowed">
+                                                                    Next
+                                                                </button>
+                                                            </div>
+                                                        </div>
 
-                <div class="mt-4" v-if="countData">
-                    <h2 class="grow-0 text-2xl font-bold text-black">Time Slot: {{ countData.start_time }}-{{
-                        countData.end_time }}
-                    </h2>
-                    <h2 class="grow-0 text-2xl font-bold text-black my-2"> Select current side</h2>
-                    <div class="flex w-full">
-                        <div v-for="side in sides" :key="side"
-                            class="flex w-full items-center pl-4 border border-gray-200 rounded ml-3 px-2">
-                            <input v-model="currentSide" type="radio" name="side" :id="`side-${side}`" :value="side"
-                                class=" text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-                            <label :for="`side-${side}`"
-                                class="w-full py-2 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ side
-                                }}</label>
-                        </div>
-                    </div>
+                                                        <div class="mt-4" v-if="countData">
+                                                            <h2 class="grow-0 text-2xl font-bold text-black">Time Slot: {{ countData.start_time }}-{{
+                                                                countData.end_time }}
+                                                            </h2>
+                                                            <h2 class="grow-0 text-2xl font-bold text-black my-2"> Select current side</h2>
+                                                            <div class="flex w-full">
+                                                                <div v-for="side in sides" :key="side"
+                                                                    class="flex w-full items-center pl-4 border border-gray-200 rounded ml-3 px-2">
+                                                                    <input v-model="currentSide" type="radio" name="side" :id="`side-${side}`" :value="side"
+                                                                        class=" text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                                                                    <label :for="`side-${side}`"
+                                                                        class="w-full py-2 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ side
+                                                                        }}</label>
+                                                                </div>
+                                                            </div>
 
-                </div>
+                                                        </div>
 
-            </div>
-            <div class="w-1/2 px-2">
-                <video controls muted :src="videos[currentVideoIdx]?.src" onended="alert('video ended.')" class="w-full"></video>
-                <div class="mt-1">Current video: <span class="ml-2 text-blue-500">{{ videos[currentVideoIdx]?.name }}</span>
-                </div>
-            </div>
+                                                    </div>
+                                                    <div class="w-1/2 px-2">
+                                                        <video controls muted :src="videos[currentVideoIdx]?.src" onended="alert('video ended.')"
+                                                            class="w-full"></video>
+                                                <div class="mt-1">Current video: <span class="ml-2 text-blue-500">{{ videos[currentVideoIdx]?.name }}</span>
+                                                </div>
+                                            </div>
 
-        </div>
+                                        </div>
 
-        <div class="border rounded-lg px-2 py-4 my-4 shadow-lg">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-                v-if="countData == null && loading">
-                <h2 class="text-4xl font-bold text-black">Loading data.....</h2>
-            </div>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-                v-if="countData == null && loading == false">
-                <h2 class="text-4xl font-bold text-black">Please choose a time slot</h2>
-            </div>
+                                        <div class="border rounded-lg px-2 py-4 my-4 shadow-lg">
+                                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                                                v-if="countData == null && loading">
+                                                <h2 class="text-4xl font-bold text-black">Loading data.....</h2>
+                                            </div>
+                                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                                                v-if="countData == null && loading == false">
+                                                <h2 class="text-4xl font-bold text-black">Please choose a time slot</h2>
+                                            </div>
 
-            <div v-if="countData">
-                <div class="grid gap-3 grid-cols-5" v-if="countData != null">
-                    <div v-for="(item, i) in countData.data" :key="item.id" class="flex flex-col">
-                        <div class="inline-flex rounded-md " role="group">
-                            <span
-                                class="px-4 py-2 grow text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-tl-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
-                                {{ item.title }}
-                            </span>
-                            <span
-                                class="px-4 py-2 text-md font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
+                                            <div v-if="countData">
+                                                <div class="grid gap-3 grid-cols-5" v-if="countData != null">
+                                                    <div v-for="(item, i) in countData.data" :key="item.id" class="flex flex-col">
+                                                        <div class="inline-flex rounded-md " role="group">
+                                                            <span
+                                                                class="px-4 py-2 grow text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-tl-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
+                                                                {{ item.title }}
+                                                        </span>
+                                                        <span
+                                                            class="px-4 py-2 text-md font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-6
+00 dark:focus:ring-blue-500 dark:focus:text-white">
 
-                                <kbd
-                                    class="px-2 py-1.5 text-md font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">{{
-                                        item.key }}</kbd>
-                            </span>
-                            <span
-                                class="px-4 py-2 text-md font-medium text-gray-900 bg-white border border-gray-200 rounded-tr-md hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
-                                {{ countData.data[i][currentSide] }}
-                            </span>
-                        </div>
-                        <div class="inline-flex rounded-md " role="group">
-                            <span @click.prevent="handleUpdateCount(i,true)"
-                                class="px-4 py-2 grow text-lg font-medium text-center text-gray-900 bg-white border border-gray-200 rounded-bl-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white cursor-pointer">
-                                +
-                            </span>
+                                                    <kbd
+                                                        class="px-2 py-1.5 text-md font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">{{
+                                                            item.key }}</kbd>
+                                                </span>
+                                                <span
+                                                    class="px-4 py-2 text-md font-medium text-gray-900 bg-white border border-gray-200 rounded-tr-md hover:bg-gray-100 hover:text-blue-700 focus
+:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
+                                                {{ countData.data[i][currentSide] }}
+                                            </span>
+                                        </div>
+                                        <div class="inline-flex rounded-md " role="group">
+                                                    <span @click.prevent="handleUpdateCount(i, true)"
+                                                class="px-4 py-2 grow text-lg font-medium text-center text-gray-900 bg-white border border-gray-200 rounded-bl-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border
+-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white cursor-pointer">
+                                            +
+                                        </span>
 
-                            <span  @click.prevent="handleUpdateCount(i, false)"
+                                            <span @click.prevent="handleUpdateCount(i, false)"
                                 class="px-4 py-2 grow text-lg text-center font-medium text-gray-900 bg-white border border-gray-200 rounded-br-md hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white cursor-pointer">
                                 -
                             </span>
