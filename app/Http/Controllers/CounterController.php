@@ -23,10 +23,13 @@ class CounterController extends Controller
 
         if ($request->user()->is_admin == false) {
             $projects = $projects->where('user_id', $request->user()->id);
+        } else {
+            $projects = $projects->withTrashed();
         }
+
         $projects = $projects->when($request->search, function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->search . '%');
-            })
+            $q->where('title', 'like', '%' . $request->search . '%');
+        })
             ->orderBy('id', 'desc')
             ->paginate(10)
             ->withQueryString();
@@ -108,7 +111,6 @@ class CounterController extends Controller
         } catch (Exception $e) {
             return redirect()->back()->with('error', "Error creating project." . $e->getMessage());
         }
-
     }
 
     public function project(int $id)
@@ -149,9 +151,20 @@ class CounterController extends Controller
         }
     }
 
-    public function delete(int $id)
+    public function delete(Request $request, int $id)
     {
-        $project = Project::findOrFail($id)->delete();
+
+
+        if ($request->force) {
+            if ($request->user()->is_admin == false) {
+                abort(403);
+            }
+            $project = Project::withTrashed()->findOrFail($id)->forceDelete();
+        } else {
+            $project = Project::findOrFail($id)->delete();
+        }
+
+
         return redirect()->route('projects.index')->with('success', "Project deleted.");
     }
 
