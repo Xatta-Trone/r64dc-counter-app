@@ -45,8 +45,12 @@ class CounterController extends Controller
 
 
         $data = [];
-        foreach ($c as $a) {
-            $data[] = $a->format('H:i');
+        foreach ($c as $k => $a) {
+            if ($k == count($c) - 1 &&  $a->format('H:i') == "00:00") {
+                $data[] = "24:00";
+            } else {
+                $data[] = $a->format('H:i');
+            }
         }
 
         return Inertia::render('Projects/Create', ['times' => $data]);
@@ -59,16 +63,20 @@ class CounterController extends Controller
         $c = CarbonPeriod::since('00:00')->minutes(5)->until('24:00')->toArray();
 
         $data = [];
-        foreach ($c as $a) {
-            $data[] = $a->format('H:i');
+        foreach ($c as $k => $a) {
+            if ($k == count($c) - 1 &&  $a->format('H:i') == "00:00") {
+                $data[] = "24:00";
+            } else {
+                $data[] = $a->format('H:i');
+            }
         }
         return Inertia::render('Projects/Create', ['times' => $data, 'project' => $project]);
     }
 
     public function store(CounterStoreRequest $request)
     {
-        // dd($request->all(), Carbon::parse($request->day));
         $c = CarbonPeriod::since($request->start_time)->minutes($request->interval)->until($request->end_time)->toArray();
+
 
         $projectData = [];
         $times = [];
@@ -76,6 +84,11 @@ class CounterController extends Controller
         foreach ($c as $a) {
             $times[] = $a->format('H:i');
         }
+
+        if ($request->end_time_24 != null) {
+            $times[] = "24:00";
+        }
+
 
         for ($i = 0; $i < count($times); $i++) {
             if ($i == count($times) - 1) {
@@ -90,6 +103,8 @@ class CounterController extends Controller
                 'updated_at' => now(),
             ];
         }
+
+        // dd($request->all(), $projectData);
 
         try {
 
