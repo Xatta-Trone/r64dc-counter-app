@@ -18,8 +18,14 @@ let props = defineProps({
 
 // delete handler
 const deleteHandler = (id) => {
-    router.delete(route('users.destroy', { id: id }), {
+    router.delete(route('users.destroy', { id: id, force: false }), {
         onBefore: () => confirm('Are you sure you want to delete this user?'),
+    });
+};
+
+const forceDeleteHandler = (id) => {
+    router.delete(route('users.destroy', { id: id, force: true }), {
+        onBefore: () => confirm('Are you sure you want to permanently delete this user?'),
     });
 };
 
@@ -94,47 +100,59 @@ watch(search, debounce(function (val) {
                             Joined
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            Actions
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="user in users.data" :key="user.id"
-                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <td class="w-4 p-4 py-3">
-                            {{ user.id }}
-                        </td>
-                        <td scope="row" class="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            {{ user.name }}
-                        </td>
-                        <td class="px-6 py-3">
-                            {{ user.email }}
-                        </td>
-                        <td class="px-6 py-3">
-                            <span v-if="user.is_admin"
-                                class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Yes</span>
-                            <span v-else
-                                class="bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">No</span>
-                        </td>
-                        <td class="px-6 py-3">
-                                <span v-if="user.is_active"
-                                    class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Yes</span>
-                                <span v-else
-                                    class="bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">No</span>
+                                        Deleted
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="user in users.data" :key="user.id"
+                                class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <td class="w-4 p-4 py-3">
+                                    {{ user.id }}
+                                </td>
+                                <td scope="row" class="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                    {{ user.name }}
+                                </td>
+                                <td class="px-6 py-3">
+                                    {{ user.email }}
+                                </td>
+                                <td class="px-6 py-3">
+                                    <span v-if="user.is_admin"
+                                        class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Yes</span>
+                                    <span v-else
+                                        class="bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">No</span>
+                                </td>
+                                <td class="px-6 py-3">
+                                        <span v-if="user.is_active"
+                                            class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Yes</span>
+                                        <span v-else
+                                            class="bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">No</span>
+                                    </td>
+                            <td class="px-6 py-3">
+                                {{ new Intl.DateTimeFormat('en-GB').format(new Date(user.created_at)) }}{{ }}
                             </td>
-                        <td class="px-6 py-3">
-                            {{ new Intl.DateTimeFormat('en-GB').format(new Date(user.created_at)) }}{{ }}
-                        </td>
-                        <td class="px-6 py-3">
+                            <td class="px-6 py-3">
+                                        <span v-if="user.deleted_at"
+                                            class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Yes</span>
+                                        <span v-else
+                                            class="bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">No</span>
+                                    </td>
+                                    <td class="px-6 py-3">
 
-                            <Link :href="route('users.edit', { id: user.id })"
-                                v-if="$page.props.auth.user.is_admin && $page.props.auth.user.id != user.id"
-                                class="mx-1 font-medium text-blue-600 dark:blue-red-500 hover:underline">
-                            Edit
-                            </Link>
-                            <a v-if="$page.props.auth.user.is_admin && $page.props.auth.user.id != user.id" href="#"
-                                @click.prevent="deleteHandler(user.id)"
-                                class="mx-1 font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
+                                    <Link :href="route('users.edit', { id: user.id })"
+                                        v-if="$page.props.auth.user.is_admin && $page.props.auth.user.id != user.id"
+                                        class="mx-1 font-medium text-blue-600 dark:blue-red-500 hover:underline">
+                                    Edit
+                                    </Link>
+                                    <a v-if="$page.props.auth.user.is_admin && $page.props.auth.user.id != user.id  && user.deleted_at == null" href="#"
+                                        @click.prevent="deleteHandler(user.id)"
+                                        class="mx-1 font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
+                                        <a v-if="$page.props.auth.user.is_admin && $page.props.auth.user.id != user.id && user.deleted_at != null"
+                                            href="#" @click.prevent="forceDeleteHandler(user.id)"
+                                            class="mx-1 font-medium text-red-600 dark:text-red-500 hover:underline">Force Delete</a>
                         </td>
                     </tr>
 
