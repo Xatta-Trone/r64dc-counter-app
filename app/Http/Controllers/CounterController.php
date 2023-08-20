@@ -38,12 +38,14 @@ class CounterController extends Controller
 
     public function create()
     {
-        $c = CarbonPeriod::since('00:00')->minutes(5)->until('23:59')->toArray();
+        $c = CarbonPeriod::since('00:00')->minutes(5)->until('24:00')->toArray();
+
 
         $data = [];
         foreach ($c as $a) {
             $data[] = $a->format('H:i');
         }
+
         return Inertia::render('Projects/Create', ['times' => $data]);
     }
 
@@ -51,7 +53,7 @@ class CounterController extends Controller
     {
         $project = Project::with(['FirstProjectData', 'lastProjectData'])->findOrFail($id);
 
-        $c = CarbonPeriod::since('00:00')->minutes(5)->until('23:59')->toArray();
+        $c = CarbonPeriod::since('00:00')->minutes(5)->until('24:00')->toArray();
 
         $data = [];
         foreach ($c as $a) {
