@@ -32,4 +32,15 @@ class CounterStoreRequest extends FormRequest
             'weather_condition' => ['required', 'string'],
         ];
     }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'end_time' => $this->end_time == "24:00" ? "23:55" : $this->end_time,
+            'end_time_24' => $this->end_time == "24:00" ? "24:00" : null,
+        ]);
+    }
 }
