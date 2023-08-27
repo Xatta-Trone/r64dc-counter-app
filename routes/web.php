@@ -2,8 +2,14 @@
 
 use App\Models\User;
 use Inertia\Inertia;
+use App\Models\Project;
+use Illuminate\Support\Str;
 use App\Mail\UserCreatedMail;
+use App\Exports\ProjectsExport;
+use App\Exports\DataCalculation;
+use App\Exports\MultipleSheetExport;
 use Illuminate\Support\Facades\Mail;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use App\Http\Controllers\UserController;
@@ -45,8 +51,15 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', UserController::class)->middleware(['admin']);
 
     Route::get('test', function () {
-        $user = User::first();
-        Mail::to($user)->send(new UserCreatedMail($user, '$password'));
+        // $user = User::first();
+        // Mail::to($user)->send(new UserCreatedMail($user, '$password'));
+
+
+        $project = Project::findOrFail(7);
+        $slug = Str::slug($project->title);
+        return Excel::download(new DataCalculation($project), 'projects-' . $slug . '.xlsx');
+
+
     });
 
 
