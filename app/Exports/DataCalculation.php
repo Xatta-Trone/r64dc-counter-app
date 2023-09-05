@@ -9,6 +9,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
@@ -23,8 +24,8 @@ class DataCalculation implements
     WithCustomStartCell
 {
     public Project $project;
-    public int $startRow = 4;
-    public function __construct(public Project $p)
+    // public int $startRow = 4;
+    public function __construct(public Project $p, public int $startRow = 4)
     {
         $this->project = Project::with('projectData')->find($p->id);
     }
@@ -33,19 +34,22 @@ class DataCalculation implements
 
     public function title(): string
     {
-        return 'Data-calculation';
+        return 'split';
     }
 
 
     public function collection()
     {
         $data = [];
+        $projectDataCount = count($this->project->projectData);
 
-        if (count($this->project->projectData) == 0) {
+        if ($projectDataCount == 0) {
             return new Collection($data);
         }
 
-
+        $sumData = [
+            'Total'
+        ];
 
         foreach ($this->project->projectData as $row => $singleItem) {
             $time = $singleItem['start_time'] . '-' . $singleItem['end_time'];
@@ -68,11 +72,16 @@ class DataCalculation implements
                 $endLetter = $startLetter + $totalItems - 1;
 
 
-                foreach ($singleItem['data'] as $item) {
+                foreach ($singleItem['data'] as $itemIndex => $item) {
                     $singleRow = [
                         ...$singleRow,
                         (string)$item[$side]
                     ];
+
+
+                    // // add the sum
+                    // $columnLetter = $this->getCharacterAt($startLetter + $itemIndex);
+                    // $sumData[] = '=SUM(' . $columnLetter . ($offset) . ':' . $columnLetter . ($offset + $projectDataCount - 1) . ")";
                 }
 
                 $singleRow = [
@@ -82,17 +91,47 @@ class DataCalculation implements
                     $row % 12 == 0 ?  '=SUM(' . $this->getCharacterAt($endLetter + 2) . ($row + $offset) . ':' . $this->getCharacterAt($endLetter + 2) . ($row + $offset + 11) . ')' : "",
                     $row % 12 == 0 ?  '=' . $this->getCharacterAt($endLetter + 3) . ($row + $offset) . '/(4*Max(' . $this->getCharacterAt($endLetter + 2) . ($row + $offset) . ':' . $this->getCharacterAt($endLetter + 2) . ($row + $offset + 11) . '))' : "",
                 ];
+                // add the sum total
+                // for ($i = 1; $i < 5; $i++) {
+                //     $columnEndLetter = $this->getCharacterAt($endLetter + $i);
+                //     $sumData[] = '=SUM(' . $columnEndLetter . ($offset) . ':' . $columnEndLetter . ($offset + $projectDataCount - 1) . ")";
+                // }
             }
+
+            // add the count data
+
 
 
             $data[] = $singleRow;
+
 
             // dd($singleRow);
             // dd($singleItem, $time);
         }
 
+        // Now add the summation of all data
+        $firstRow = $this->project->projectData[0];
 
-        // dd($data);
+        foreach (['left', 'through', 'right'] as $sideIndex => $side) {
+            $totalItems = count($singleItem['data']);
+            $startLetter = 2 + ($sideIndex * ($totalItems + 4));
+            $endLetter = $startLetter + $totalItems - 1;
+
+            foreach ($firstRow['data'] as $itemIndex => $item) {
+                // add the sum
+                $columnLetter = $this->getCharacterAt($startLetter + $itemIndex);
+                $sumData[] = '=SUM(' . $columnLetter . ($offset) . ':' . $columnLetter . ($offset + $projectDataCount - 1) . ")";
+            }
+            for ($i = 1; $i < 5; $i++) {
+                $columnEndLetter = $this->getCharacterAt($endLetter + $i);
+                $sumData[] = '=SUM(' . $columnEndLetter . ($offset) . ':' . $columnEndLetter . ($offset + $projectDataCount - 1) . ")";
+            }
+        };
+
+        // add the sum row to the final row
+        $data[] = $sumData;
+
+        // dd($data, $sumData);
 
         return new Collection($data);
     }
@@ -153,55 +192,72 @@ class DataCalculation implements
 
     public function registerEvents(): array
     {
-        // $cellsToMerge = [];
-        // $startRow = 7;
+        $cellsToMerge = [];
 
-        // if ($this->project->projectData) {
-        //     for ($i = 0; $i < count($this->project->projectData); $i++) {
-        //         $cellsToMerge[] = 'A' . $startRow . ':' . 'A' . $startRow + 2;
-        //         $startRow = $startRow + 3;
-        //     }
-        // }
-
-        // return [
-        //     AfterSheet::class => function (AfterSheet $event) use ($cellsToMerge) {
-
-        //         /** @var Sheet $sheet */
-        //         $sheet = $event->sheet;
-
-        //         // $sheet->mergeCells('A1:B1');
-        //         $sheet->setCellValue('A1', "Project Name");
-        //         $sheet->setCellValue('A2', "Date");
-        //         $sheet->setCellValue('A3', "Day");
-        //         $sheet->setCellValue('A4', "From");
-
-        //         $sheet->mergeCells('B1:F1');
-        //         $sheet->setCellValue('B1', $this->project->title);
-        //         $sheet->setCellValue('B3', $this->project->day);
-        //         $sheet->setCellValue('B4', $this->project->projectData[0]['start_time']);
-
-        //         $sheet->setCellValue('C2', "Intersection");
-        //         $sheet->setCellValue('C3', "Approach Name");
-        //         $sheet->setCellValue('C4', "To");
-
-        //         $sheet->setCellValue('D2', $this->project->intersection);
-        //         $sheet->setCellValue('D3', $this->project->approach_name);
-        //         $sheet->setCellValue('D4', $this->project->projectData[count($this->project->projectData) - 1]['end_time']);
-
-        //         $sheet->setCellValue('E2', "Surveyor Name");
-        //         $sheet->setCellValue('E3', "Surveyor Id");
-        //         $sheet->setCellValue('E4', "Weather Condition");
-
-        //         $sheet->setCellValue('F2', $this->project->user->name);
-        //         $sheet->setCellValue('F4', $this->project->weather_condition);
+        if ($this->project->projectData) {
+            $totalItems = count($this->project->projectData[0]['data']);
+            foreach (['left', 'through', 'right'] as $sideIndex => $side) {
+                $startLetter = 2 + ($sideIndex * ($totalItems + 4));
+                $endLetter = $startLetter + $totalItems - 1 + 4;
+                $cellsToMerge[] = $this->getCharacterAt($startLetter) . '3:' . $this->getCharacterAt($endLetter) . '3';
+            }
+        }
 
 
+        return [
+            AfterSheet::class => function (AfterSheet $event) use ($cellsToMerge) {
 
-        //         foreach ($cellsToMerge as $cellRange) {
-        //             $event->sheet->getDelegate()->mergeCells($cellRange);
-        //         }
-        //     },
-        // ];
-        return [];
+                /** @var Sheet $sheet */
+                $sheet = $event->sheet;
+
+                // $sheet->mergeCells('A1:B1');
+                // $sheet->setCellValue('A1', "Project Name");
+                // $sheet->setCellValue('A2', "Date");
+                // $sheet->setCellValue('A3', "Day");
+                // $sheet->setCellValue('A4', "From");
+
+                // $sheet->mergeCells('B1:F1');
+                // $sheet->setCellValue('B1', $this->project->title);
+                // $sheet->setCellValue('B3', $this->project->day);
+                // $sheet->setCellValue('B4', $this->project->projectData[0]['start_time']);
+
+                // $sheet->setCellValue('C2', "Intersection");
+                // $sheet->setCellValue('C3', "Approach Name");
+                // $sheet->setCellValue('C4', "To");
+
+                // $sheet->setCellValue('D2', $this->project->intersection);
+                // $sheet->setCellValue('D3', $this->project->approach_name);
+                // $sheet->setCellValue('D4', $this->project->projectData[count($this->project->projectData) - 1]['end_time']);
+
+                // $sheet->setCellValue('E2', "Surveyor Name");
+                // $sheet->setCellValue('E3', "Surveyor Id");
+                // $sheet->setCellValue('E4', "Weather Condition");
+
+                // $sheet->setCellValue('F2', $this->project->user->name);
+                // $sheet->setCellValue('F4', $this->project->weather_condition);
+
+
+
+                foreach ($cellsToMerge as $index => $cellRange) {
+                    $event->sheet->getDelegate()->mergeCells($cellRange);
+                    $cellValue = "Left";
+                    $cell = explode(":", $cellRange);
+
+                    if ($index == 1) {
+                        $cellValue = "Through";
+                    }
+                    if ($index == 2) {
+                        $cellValue = "Right";
+                    }
+
+
+
+                    $sheet->setCellValue($cell[0], $cellValue);
+
+                    $event->sheet->getDelegate()->getStyle($cellRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                    $event->sheet->getDelegate()->getStyle($cellRange)->getFont()->setBold(true)->setSize(16);
+                }
+            },
+        ];
     }
 }

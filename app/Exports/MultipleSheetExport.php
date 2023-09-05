@@ -24,7 +24,15 @@ class MultipleSheetExport implements WithMultipleSheets
         $sheets = [];
 
         $sheets[] = new ProjectsExport($this->p);
-        $sheets[] = new DataCalculation($this->p);
+        $sheets[] = new DataCalculation(p: $this->p, startRow: 4);
+        $sheets[] = new FinalCalculationExport(
+            approach: $this->p->approach_name ?? "",
+            intersection: $this->p->intersection ?? "",
+            startRow: 4,
+            startData: $this->p->projectData->first(),
+            endData: $this->p->projectData->last(),
+            totalRows: count($this->p->projectData)
+        );
 
         return $sheets;
     }
