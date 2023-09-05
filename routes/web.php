@@ -55,9 +55,9 @@ Route::middleware('auth')->group(function () {
         // Mail::to($user)->send(new UserCreatedMail($user, '$password'));
 
 
-        $project = Project::findOrFail(7);
+        $project = Project::findOrFail(8);
         $slug = Str::slug($project->title);
-        return Excel::download(new DataCalculation($project), 'projects-' . $slug . '.xlsx');
+        return Excel::download(new MultipleSheetExport($project), 'projects-' . $slug . '.xlsx');
 
 
     });
