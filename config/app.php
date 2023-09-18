@@ -1,5 +1,6 @@
 <?php
 
+use App\Providers\DropboxServiceProvider;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\ServiceProvider;
 
@@ -159,6 +160,7 @@ return [
         /*
          * Package Service Providers...
          */
+        DropboxServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -166,7 +168,9 @@ return [
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
-        App\Providers\EventServiceProvider::class, App\Providers\RouteServiceProvider::class, App\Providers\GoogleDriveServiceProvider::class,
+        App\Providers\EventServiceProvider::class,
+        App\Providers\RouteServiceProvider::class,
+        App\Providers\GoogleDriveServiceProvider::class,
 
     ])->toArray(),
 
