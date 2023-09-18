@@ -6,6 +6,7 @@ use Carbon\CarbonPeriod;
 use App\Models\ProjectTimeData;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -25,6 +26,7 @@ class FinalCalculationExport implements
 {
 
     public int $totalItems = 0;
+    public array $timeSlotData = [];
 
 
     public function __construct(public string $approach, public string $intersection, public int $startRow, public ProjectTimeData  $startData, public ProjectTimeData  $endData, public int $totalRows)
@@ -240,6 +242,8 @@ class FinalCalculationExport implements
             }
         }
 
+        $this->timeSlotData =  $timeSlotData;
+
         $data[] = [
             'TimeSlot',
             'Left',
@@ -262,6 +266,55 @@ class FinalCalculationExport implements
                 '=split!' . $this->getCharacterAt($rightTotalColumn) . $this->startRow + 1 + (12 * $index),
                 '=sum(B' . (27 + $index) . ':D' . (27 + $index) . ')',
                 '=split!' . $this->getCharacterAt($leftTotalColumn + 1) . $this->startRow + 1 + (12 * $index),
+            ];
+        }
+
+        $data[] = [''];
+        $data[] = ["Capacity Information"];
+        $data[] = ['', 'Number of Lanes', '15'];
+        $data[] = ['', 'Capacity Per Lane', '1700'];
+        $data[] = ["LOS Table"];
+        $data[] = ['Type', 'LOS A', 'LOS B', 'LOS C', 'LOS D', 'LOS E', 'LOS F'];
+        $data[] = ['Co-efficient', '0.35', '0.55', '0.77', '0.92', '1', '2'];
+        $data[] = ["Hourly Volume-PCU (Approach: " . $this->approach . " To Intersection: " . $this->intersection . ")", 'LOS A', 'LOS B', 'LOS C', 'LOS D', 'LOS E', 'LOS F'];
+        $data[] = [''];
+        $data[] = [
+            'TimeSlot',
+            'LOSA', 'LOSB', 'LOSC', 'LOSD', 'LOSE', 'LOSF',
+            'Left',
+            'Through',
+            'Right',
+            'Total',
+            'Capacity',
+            'v/c',
+            'LOS'
+        ];
+
+        // rows count
+        $totalFixedRows = 26;
+        $rowNumOfLOSTable = $totalFixedRows + count($timeSlotData) + 7;
+        $firstRowNumber = $rowNumOfLOSTable + 3;
+
+
+
+
+        foreach ($timeSlotData as $index => $timeSlot) {
+            // current row number
+            $data[] = [
+                $timeSlot,
+                '=$B$' . $rowNumOfLOSTable,
+                '=$C$' . $rowNumOfLOSTable,
+                '=$D$' . $rowNumOfLOSTable,
+                '=$E$' . $rowNumOfLOSTable,
+                '=$F$' . $rowNumOfLOSTable,
+                '=$G$' . $rowNumOfLOSTable,
+                '=pcu!' . $this->getCharacterAt($leftTotalColumn) . $this->startRow + 1 + (12 * $index),
+                '=pcu!' . $this->getCharacterAt($throughTotalColumn) . $this->startRow + 1 + (12 * $index),
+                '=pcu!' . $this->getCharacterAt($rightTotalColumn) . $this->startRow + 1 + (12 * $index),
+                '=sum(H' . ($firstRowNumber + $index + 1) . ':J' . ($firstRowNumber + $index + 1) . ')',
+                '=$C$' . $rowNumOfLOSTable - 4 . '*$C$' . $rowNumOfLOSTable - 3,
+                '=K' . ($firstRowNumber + $index + 1) . '/L' . ($firstRowNumber + $index + 1),
+                '=HLOOKUP(M' . ($firstRowNumber + $index + 1) . ',$B$' . ($rowNumOfLOSTable) . ':$G$' . ($rowNumOfLOSTable + 1) . ',2,TRUE)'
             ];
         }
 
@@ -309,9 +362,16 @@ class FinalCalculationExport implements
 
                 $sheet->mergeCells('A3:' . $this->getCharacterAt(count($this->startData->data) + 3) . "3");
                 $sheet->setCellValue('A3', "Vehicle composition (Approach: " . $this->approach . " To Intersection: " . $this->intersection . ")");
-                // $sheet->setCellValue('A2', "Date");
-                // $sheet->setCellValue('A3', "Day");
-                // $sheet->setCellValue('A4', "From");
+
+                $event->sheet->getDelegate()->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+                $event->sheet->getDelegate()->getStyle('A3')->getFont()->setBold(true)->setSize(16);
+                $event->sheet->getDelegate()->getStyle('A25')->getFont()->setBold(true)->setSize(16);
+                $event->sheet->getDelegate()->getStyle('A' . (count($this->timeSlotData) + 3 + 25))->getFont()->setBold(true)->setSize(16);
+                $event->sheet->getDelegate()->getStyle('A' . (count($this->timeSlotData) + 6 + 25))->getFont()->setBold(true)->setSize(16);
+                $event->sheet->getDelegate()->getStyle('A' . (count($this->timeSlotData) + 9 + 25))->getFont()->setBold(true)->setSize(16);
+
+                $sheet->getStyle('C' . (25 + count($this->timeSlotData) + 4) . ':C' . (25 + count($this->timeSlotData) + 5))->getFill()->applyFromArray(['fillType' => 'solid', 'rotation' => 0, 'color' => ['rgb' => 'f1c40f'],]);
+                $sheet->getStyle('B' . (25 + count($this->timeSlotData) + 8) . ':G' . (25 + count($this->timeSlotData) + 8))->getFill()->applyFromArray(['fillType' => 'solid', 'rotation' => 0, 'color' => ['rgb' => 'f1c40f'],]);
 
 
                 return [];
