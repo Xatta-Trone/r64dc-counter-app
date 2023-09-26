@@ -34,6 +34,14 @@ class MultipleSheetExport implements WithMultipleSheets
             endData: $this->p->projectData->last(),
             totalRows: count($this->p->projectData)
         );
+        $sheets[] = new FinalCalculationVerticalExport(
+            approach: $this->p->approach_name ?? "",
+            intersection: $this->p->intersection ?? "",
+            startRow: 4,
+            startData: $this->p->projectData->first(),
+            endData: $this->p->projectData->last(),
+            totalRows: count($this->p->projectData)
+        );
 
         return $sheets;
     }
