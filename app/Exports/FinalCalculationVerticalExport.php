@@ -16,7 +16,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 
-class FinalCalculationExport implements
+class FinalCalculationVerticalExport implements
     FromCollection,
     WithEvents,
     ShouldAutoSize,
@@ -38,7 +38,7 @@ class FinalCalculationExport implements
 
     public function title(): string
     {
-        return 'calculation';
+        return 'calculation-vertical-table';
     }
 
 
@@ -244,46 +244,51 @@ class FinalCalculationExport implements
 
         $this->timeSlotData =  $timeSlotData;
 
-
+        $data[] = [
+            'TimeSlot',
+            'Left',
+            'Through',
+            'Right',
+            'Total',
+            'PHF',
+        ];
 
         $leftTotalColumn = $this->totalItems + 4;
         $throughTotalColumn = $leftTotalColumn + $this->totalItems + 3;
         $rightTotalColumn = $throughTotalColumn + $this->totalItems + 5;
 
-        // time row
-        $timeRow = ['TimeSlot'];
-        $leftRow = ['Left'];
-        $throughRow = ['Through'];
-        $rightRow = ['Right'];
-        $totalRow = ['Total'];
-        $phfRow = ['PHF'];
 
         foreach ($timeSlotData as $index => $timeSlot) {
-            $timeRow[] = $timeSlot;
-            $leftRow[] = '=split!' . $this->getCharacterAt($leftTotalColumn) . $this->startRow + 1 + (12 * $index);
-            $throughRow[] = '=split!' . $this->getCharacterAt($throughTotalColumn) . $this->startRow + 1 + (12 * $index);
-            $rightRow[] = '=split!' . $this->getCharacterAt($rightTotalColumn) . $this->startRow + 1 + (12 * $index);
-            $totalRow[] = '=sum(' . $this->getCharacterAt($index + 2) . '27:' . $this->getCharacterAt($index + 2) . '29)';
-            $phfRow[] = '=split!' . $this->getCharacterAt($leftTotalColumn + 1) . $this->startRow + 1 + (12 * $index);
+            $data[] = [
+                $timeSlot,
+                '=split!' . $this->getCharacterAt($leftTotalColumn) . $this->startRow + 1 + (12 * $index),
+                '=split!' . $this->getCharacterAt($throughTotalColumn) . $this->startRow + 1 + (12 * $index),
+                '=split!' . $this->getCharacterAt($rightTotalColumn) . $this->startRow + 1 + (12 * $index),
+                '=sum(B' . (27 + $index) . ':D' . (27 + $index) . ')',
+                '=split!' . $this->getCharacterAt($leftTotalColumn + 1) . $this->startRow + 1 + (12 * $index),
+            ];
         }
-
-        $data[] = $timeRow;
-        $data[] = $leftRow;
-        $data[] = $throughRow;
-        $data[] = $rightRow;
-        $data[] = $totalRow;
-        $data[] = $phfRow;
 
         $data[] = [''];
         $data[] = ["Capacity Information"];
-        $data[] = ['', 'Number of Lanes', '15'];
-        $data[] = ['', 'Capacity Per Lane', '1700'];
+        $data[] = ['', 'Number of Lanes', '=calculation!C34'];
+        $data[] = ['', 'Capacity Per Lane', '=calculation!C35'];
         $data[] = ["LOS Table"];
         $data[] = ['Type', 'LOS A', 'LOS B', 'LOS C', 'LOS D', 'LOS E', 'LOS F'];
-        $data[] = ['Co-efficient', '0.35', '0.55', '0.77', '0.92', '1', '2'];
+        $data[] = ['Co-efficient', '=calculation!B38', '=calculation!C38', '=calculation!D38', '=calculation!E38', '=calculation!F38', '=calculation!G38',];
         $data[] = ["Hourly Volume-PCU (Approach: " . $this->approach . " To Intersection: " . $this->intersection . ")", 'LOS A', 'LOS B', 'LOS C', 'LOS D', 'LOS E', 'LOS F'];
         $data[] = [''];
-
+        $data[] = [
+            'TimeSlot',
+            'LOSA', 'LOSB', 'LOSC', 'LOSD', 'LOSE', 'LOSF',
+            'Left',
+            'Through',
+            'Right',
+            'Total',
+            'Capacity',
+            'v/c',
+            'LOS'
+        ];
 
         // rows count
         $totalFixedRows = 26;
@@ -291,56 +296,40 @@ class FinalCalculationExport implements
         $firstRowNumber = $rowNumOfLOSTable + 3;
 
 
-        // rows
-        $timeRow2 = ['TimeSlot'];
-        $losA = ['LOSA'];
-        $losB = ['LOSB'];
-        $losC = ['LOSC'];
-        $losD = ['LOSD'];
-        $losE = ['LOSE'];
-        $losF = ['LOSF'];
-        $leftCol2 = ['Left'];
-        $throughCol2 = ['Through'];
-        $rightCol2 = ['Right'];
-        $totalCol2 = ['Total'];
-        $capacityCol = ['Capacity'];
-        $wcCol = ['v/c'];
-        $losCol = ['LOS'];
+
 
         foreach ($timeSlotData as $index => $timeSlot) {
             // current row number
-            $timeRow2[] = $timeSlot;
-            $losA[] = '=$B$38';
-            $losB[] = '=$C$38';
-            $losC[] = '=$D$38';
-            $losD[] = '=$E$38';
-            $losE[] = '=$F$38';
-            $losF[] = '=$G$38';
-            $leftCol2[] = '=pcu!' . $this->getCharacterAt($leftTotalColumn) . $this->startRow + 1 + (12 * $index);
-            $throughCol2[] = '=pcu!' . $this->getCharacterAt($throughTotalColumn) . $this->startRow + 1 + (12 * $index);
-            $rightCol2[] = '=pcu!' . $this->getCharacterAt($rightTotalColumn) . $this->startRow + 1 + (12 * $index);
-            $totalCol2[] = '=sum(' . $this->getCharacterAt($index + 2) . '48:' . $this->getCharacterAt($index + 2) . '50)';
-            $capacityCol[] = '=$C$34*$C$35';
-            $wcCol[] =  '=' . $this->getCharacterAt($index + 2) . '51/' . $this->getCharacterAt($index + 2) . '52';
-            $losCol[] = '=HLOOKUP(' . $this->getCharacterAt($index + 2) . '53,$B$38:$G$39,2,TRUE)';
+            $data[] = [
+                $timeSlot,
+                '=$B$' . $rowNumOfLOSTable,
+                '=$C$' . $rowNumOfLOSTable,
+                '=$D$' . $rowNumOfLOSTable,
+                '=$E$' . $rowNumOfLOSTable,
+                '=$F$' . $rowNumOfLOSTable,
+                '=$G$' . $rowNumOfLOSTable,
+                '=pcu!' . $this->getCharacterAt($leftTotalColumn) . $this->startRow + 1 + (12 * $index),
+                '=pcu!' . $this->getCharacterAt($throughTotalColumn) . $this->startRow + 1 + (12 * $index),
+                '=pcu!' . $this->getCharacterAt($rightTotalColumn) . $this->startRow + 1 + (12 * $index),
+                '=sum(H' . ($firstRowNumber + $index + 1) . ':J' . ($firstRowNumber + $index + 1) . ')',
+                '=$C$' . $rowNumOfLOSTable - 4 . '*$C$' . $rowNumOfLOSTable - 3,
+                '=K' . ($firstRowNumber + $index + 1) . '/L' . ($firstRowNumber + $index + 1),
+                '=HLOOKUP(M' . ($firstRowNumber + $index + 1) . ',$B$' . ($rowNumOfLOSTable) . ':$G$' . ($rowNumOfLOSTable + 1) . ',2,TRUE)'
+            ];
         }
 
-        $data[] = $timeRow2;
-        $data[] = $losA;
-        $data[] = $losB;
-        $data[] = $losC;
-        $data[] = $losD;
-        $data[] = $losE;
-        $data[] = $losF;
-        $data[] = $leftCol2;
-        $data[] = $throughCol2;
-        $data[] = $rightCol2;
-        $data[] = $totalCol2;
-        $data[] = $capacityCol;
-        $data[] = $wcCol;
-        $data[] = $losCol;
 
 
+
+
+        // dd($hourlyRow, $rightTotalColumn, $this->getCharacterAt($rightTotalColumn));
+
+
+
+
+
+
+        // dd($this->startData->data, count($this->startData->data), $this->endData);
         return  new Collection($data);
     }
 
@@ -377,12 +366,12 @@ class FinalCalculationExport implements
                 $event->sheet->getDelegate()->getStyle('A1')->getFont()->setBold(true)->setSize(16);
                 $event->sheet->getDelegate()->getStyle('A3')->getFont()->setBold(true)->setSize(16);
                 $event->sheet->getDelegate()->getStyle('A25')->getFont()->setBold(true)->setSize(16);
-                $event->sheet->getDelegate()->getStyle('A33')->getFont()->setBold(true)->setSize(16);
-                $event->sheet->getDelegate()->getStyle('A36')->getFont()->setBold(true)->setSize(16);
-                $event->sheet->getDelegate()->getStyle('A39')->getFont()->setBold(true)->setSize(16);
+                $event->sheet->getDelegate()->getStyle('A' . (count($this->timeSlotData) + 3 + 25))->getFont()->setBold(true)->setSize(16);
+                $event->sheet->getDelegate()->getStyle('A' . (count($this->timeSlotData) + 6 + 25))->getFont()->setBold(true)->setSize(16);
+                $event->sheet->getDelegate()->getStyle('A' . (count($this->timeSlotData) + 9 + 25))->getFont()->setBold(true)->setSize(16);
 
-                $sheet->getStyle('B38:G38')->getFill()->applyFromArray(['fillType' => 'solid', 'rotation' => 0, 'color' => ['rgb' => 'f1c40f'],]);
-                $sheet->getStyle('C34:C35')->getFill()->applyFromArray(['fillType' => 'solid', 'rotation' => 0, 'color' => ['rgb' => 'f1c40f'],]);
+                $sheet->getStyle('C' . (25 + count($this->timeSlotData) + 4) . ':C' . (25 + count($this->timeSlotData) + 5))->getFill()->applyFromArray(['fillType' => 'solid', 'rotation' => 0, 'color' => ['rgb' => 'f1c40f'],]);
+                $sheet->getStyle('B' . (25 + count($this->timeSlotData) + 8) . ':G' . (25 + count($this->timeSlotData) + 8))->getFill()->applyFromArray(['fillType' => 'solid', 'rotation' => 0, 'color' => ['rgb' => 'f1c40f'],]);
 
 
                 return [];
