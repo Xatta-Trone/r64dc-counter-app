@@ -12,6 +12,7 @@ use Illuminate\Support\Carbon;
 use App\Exports\ProjectsExport;
 use App\Models\ProjectTimeData;
 use Illuminate\Support\Facades\DB;
+use App\Exports\MultipleSheetExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Requests\CounterStoreRequest;
 
@@ -199,6 +200,7 @@ class CounterController extends Controller
     {
         $project = Project::with(['user', 'projectData'])->findOrFail($id);
         $slug = Str::slug($project->title);
-        return Excel::download(new ProjectsExport($project), 'projects-' . $slug . '.xlsx');
+        return Excel::download(new MultipleSheetExport($project), 'projects-' . $slug . '.xlsx');
+
     }
 }

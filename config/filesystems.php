@@ -63,6 +63,12 @@ return [
             'folder' => env('GOOGLE_DRIVE_FOLDER'), // without folder is root of drive or team drive
             //'teamDriveId' => env('GOOGLE_DRIVE_TEAM_DRIVE_ID'),
         ],
+        'dropbox' => [
+            'driver' => 'dropbox',
+            'key' => env('DROPBOX_APP_KEY'),
+            'secret' => env('DROPBOX_APP_SECRET'),
+            'authorization_token' => env('DROPBOX_ACCESS_TOKEN'),
+        ],
 
     ],
 

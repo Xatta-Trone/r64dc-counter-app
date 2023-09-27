@@ -14,8 +14,9 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
+use Maatwebsite\Excel\Concerns\WithTitle;
 
-class ProjectsExport implements FromCollection, WithHeadings, WithEvents, WithCustomStartCell, ShouldAutoSize
+class ProjectsExport implements FromCollection, WithHeadings, WithEvents, WithCustomStartCell, ShouldAutoSize, WithTitle
 {
     public Project $project;
     public function __construct(public Project $p)
@@ -24,6 +25,11 @@ class ProjectsExport implements FromCollection, WithHeadings, WithEvents, WithCu
     }
 
     use Exportable, RegistersEventListeners;
+
+    public function title(): string
+    {
+        return 'Data';
+    }
 
 
     public function collection()
@@ -59,11 +65,13 @@ class ProjectsExport implements FromCollection, WithHeadings, WithEvents, WithCu
                 $outerRow[] = $tempData;
             }
 
-            // dd($outerRow);
+
             $data = [...$data, ...$outerRow];
 
 
         }
+
+        // dd($data);
 
         return new Collection($data);
     }
