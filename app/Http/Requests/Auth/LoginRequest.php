@@ -45,6 +45,13 @@ class LoginRequest extends FormRequest
         // check user is active
         $user =  User::where('email', $this->email)->first();
 
+        if ($user == null) {
+            throw ValidationException::withMessages([
+                'email' => trans('auth.failed'),
+            ]);
+        }
+
+
         if ($user->is_active == false) {
             throw ValidationException::withMessages([
                 'email' => 'Your account is inactive. Please contact admin.',
