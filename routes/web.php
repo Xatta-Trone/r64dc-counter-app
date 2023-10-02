@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/export/{id}', [CounterController::class, 'export'])->name('projects.export');
 
     Route::resource('users', UserController::class)->middleware(['admin']);
+    Route::delete('users/restore/{id}', [UserController::class, 'restore'])->middleware(['admin'])->name('users.restore');
 
     Route::get('test', function () {
         // $user = User::first();
