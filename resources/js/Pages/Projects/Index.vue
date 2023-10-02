@@ -131,7 +131,7 @@ const format = (date) => {
                         </option>
                     </select>
                 </div>
-                <div class="ml-5 grow">
+                <div class="ml-5 grow" v-if="$page.props.auth.user.is_admin">
                     <label for="user_id" class="">Filter Surveyor</label>
                     <select id="user_id" v-model="user_id"
                         class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
@@ -145,7 +145,7 @@ const format = (date) => {
                         placeholder="Select date" />
 
                 </div>
-                <div class="ml-5 grow">
+                <div class="ml-5 grow" v-if="$page.props.auth.user.is_admin">
                     <label for="is_deleted" class="">Show deleted</label>
                     <select id="is_deleted" v-model="is_deleted"
                         class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">

@@ -170,7 +170,14 @@ class CounterController extends Controller
 
     public function update(ProjectUpdateRequest $request, string $id)
     {
-        $project = Project::findOrFail($id)->update(array_merge($request->validated(), ['day' => Carbon::parse($request->day)->format('Y-m-d')]));
+
+        $project = Project::findOrFail($id);
+
+        if ($project->user_id != $request->user()->id &&  $request->user()->is_admin == false) {
+            abort(403);
+        }
+
+        $project->update(array_merge($request->validated(), ['day' => Carbon::parse($request->day)->format('Y-m-d')]));
         return redirect()->route('projects.index')->with('success', "Project Updated.");
     }
 
