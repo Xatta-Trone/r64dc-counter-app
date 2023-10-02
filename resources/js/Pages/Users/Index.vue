@@ -124,7 +124,7 @@ watch(is_admin, debounce(function (val) {
                 <div class="ml-5">
                     <label for="clear" class="block">Clear filters</label>
                     <span @click="clearFilters"
-                        class="inline-block bg-blue-300 px-2 py-1.5 mt-1 cursor-pointer rounded-md text-black">X</span>
+                        class="inline-block bg-gray-800 w-full text-center px-2 py-1.5 mt-1 cursor-pointer rounded-md text-white">X</span>
                 </div>
             </div>
             <!-- table -->

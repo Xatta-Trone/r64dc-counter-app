@@ -46,9 +46,6 @@ class UserController extends Controller
             $users->where('is_admin', 0);
         }
 
-
-
-
         $users = $users->when($request->search, function ($q) use ($request) {
             $q->where('name', 'like', '%' . $request->search . '%')->orWhere('email', 'like', '%' . $request->search . '%');
         })
@@ -102,9 +99,13 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Request $request, string $id)
     {
-        $user = User::findOrFail($id);
+        if ($request->user()->is_admin == false) {
+            abort(403);
+        }
+
+        $user = User::withTrashed()->findOrFail($id);
         return Inertia::render('Users/Edit', ['user' => $user]);
     }
 
@@ -118,7 +119,7 @@ class UserController extends Controller
         }
 
         try {
-            $user = User::findOrFail($id);
+            $user = User::withTrashed()->findOrFail($id);
             $user->update($request->validated());
 
             return redirect()->route('users.index')->with('success', 'User Updated.');
