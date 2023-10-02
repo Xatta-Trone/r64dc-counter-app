@@ -212,8 +212,8 @@ const handleFilter = () => {
                             <a v-if="$page.props.auth.user.is_admin && $page.props.auth.user.id != user.id && user.deleted_at != null"
                                 href="#" @click.prevent="restoreHandler(user.id)"
                                 class="px-3 py-2 text-sm font-medium text-center text-white bg-gray-700 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-gray-300 mr-1">
-                                Restore
-                                User</a>
+                                Restore User
+                            </a>
                         </td>
                     </tr>
 

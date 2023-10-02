@@ -15,6 +15,7 @@ use Illuminate\Foundation\Application;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CounterController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ParentProjectController;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,6 +51,9 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('users', UserController::class)->middleware(['admin']);
     Route::delete('users/restore/{id}', [UserController::class, 'restore'])->middleware(['admin'])->name('users.restore');
+
+    Route::resource('parent-projects', ParentProjectController::class);
+    Route::delete('parent-projects/restore/{id}', [ParentProjectController::class, 'restore'])->middleware(['admin'])->name('parent-projects.restore');
 
     Route::get('test', function () {
         // $user = User::first();
