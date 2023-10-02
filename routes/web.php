@@ -43,11 +43,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects-create', [CounterController::class, 'create'])->name('projects.create');
     Route::get('/projects-duplicate/{id}', [CounterController::class, 'duplicate'])->name('projects.duplicate');
     Route::delete('/projects/{id}', [CounterController::class, 'delete'])->name('projects.delete');
+    Route::get('/projects/{id}/edit', [CounterController::class, 'edit'])->name('projects.edit');
+    Route::put('/projects/{id}', [CounterController::class, 'update'])->name('projects.update');
     Route::get('/projects-slots/{id}', [CounterController::class, 'timeSlots'])->name('projects.slots');
     Route::get('/projects-count/{id}', [CounterController::class, 'count'])->name('projects.count');
     Route::get('/project-count-data/{id}', [CounterController::class, 'countData'])->name('projects.countData');
     Route::post('/project-count-data/{id}', [CounterController::class, 'updateCountData'])->name('projects.updateCountData');
     Route::get('/export/{id}', [CounterController::class, 'export'])->name('projects.export');
+
+
 
     Route::resource('users', UserController::class)->middleware(['admin']);
     Route::delete('users/restore/{id}', [UserController::class, 'restore'])->middleware(['admin'])->name('users.restore');

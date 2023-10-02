@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CounterStoreRequest extends FormRequest
+class ProjectUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,25 +23,11 @@ class CounterStoreRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string'],
-            'start_time' => 'date_format:H:i',
-            'end_time' => 'date_format:H:i|after:start_time',
-            'interval' => ['required','integer'],
             'day' => ['date'],
             'intersection' => ['required', 'string'],
             'approach_name' => ['required', 'string'],
             'weather_condition' => ['required', 'string'],
             'parent_project_id' => ['required', 'exists:parent_projects,id']
         ];
-    }
-
-    /**
-     * Prepare the data for validation.
-     */
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'end_time' => $this->end_time == "24:00" ? "23:55" : $this->end_time,
-            'end_time_24' => $this->end_time == "24:00" ? "24:00" : null,
-        ]);
     }
 }

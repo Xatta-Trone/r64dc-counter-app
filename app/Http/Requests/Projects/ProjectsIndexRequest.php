@@ -29,6 +29,7 @@ class ProjectsIndexRequest extends FormRequest
             'user_id' => ['nullable'],
             'is_deleted' => ['nullable'],
             'date' => ['nullable', 'date'],
+            'parent_id' => ['nullable', 'integer'],
         ];
     }
 

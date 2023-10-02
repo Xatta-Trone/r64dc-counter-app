@@ -15,6 +15,7 @@ let props = defineProps({
     projects: { type: Object },
     filters: { type: Object },
     users: { type: Array },
+    parents: { type: Array },
 });
 
 // handle search
@@ -22,15 +23,21 @@ let search = ref(props.filters?.search ?? "")
 let user_id = ref(props.filters?.user_id ?? "")
 let is_deleted = ref(props.filters?.is_deleted ?? "")
 let date = ref(props.filters?.date ?? null)
+let parent_id = ref(props.filters?.parent_id ?? "")
 
 const clearFilters = () => {
     search.value = "";
     user_id.value = "";
     is_deleted.value = "";
     date.value = null;
+    parent_id.value = ""
 };
 
 watch(search, debounce(() => {
+    handleSearch();
+},));
+
+watch(parent_id, debounce(() => {
     handleSearch();
 },));
 
@@ -45,7 +52,7 @@ watch(user_id, debounce(() => {
 },));
 
 const handleSearch = () => {
-    return router.get(route('projects.index'), { search: search.value, is_deleted: is_deleted.value, date: format(date.value), user_id: user_id.value }, { preserveState: true, replace: true });
+    return router.get(route('projects.index'), { search: search.value, is_deleted: is_deleted.value, date: format(date.value), user_id: user_id.value, parent_id: parent_id.value }, { preserveState: true, replace: true });
 }
 
 
@@ -114,6 +121,16 @@ const format = (date) => {
                             placeholder="Search for items">
                     </div>
                 </div>
+
+                <div class="ml-5 grow">
+                    <label for="parent_id" class="">Filter Project Folder</label>
+                    <select id="parent_id" v-model="parent_id"
+                        class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <option value="" selected>Select Project Folder</option>
+                        <option :value="parent.id" v-for="parent in parents" :key="parent.id + '-parent'">{{ parent.title }}
+                        </option>
+                    </select>
+                </div>
                 <div class="ml-5 grow">
                     <label for="user_id" class="">Filter Surveyor</label>
                     <select id="user_id" v-model="user_id"
@@ -124,7 +141,8 @@ const format = (date) => {
                 </div>
                 <div class="ml-5 grow">
                     <label for="date" class="">Filter Date</label>
-                    <VueDatePicker class="w-full mt-1" v-model="date" :enable-time-picker="false" :format="format" placeholder="Select date" />
+                    <VueDatePicker class="w-full mt-1" v-model="date" :enable-time-picker="false" :format="format"
+                        placeholder="Select date" />
 
                 </div>
                 <div class="ml-5 grow">
@@ -220,6 +238,9 @@ const format = (date) => {
                             </Link>
                             <Link :href='route("projects.duplicate", { id: project.id })'
                                 class="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-1">Duplicate
+                            </Link>
+                            <Link :href='route("projects.edit", { id: project.id })'
+                                class="font-medium text-red-600 dark:text-red-500 hover:underline mr-1">Edit
                             </Link>
                             <a :href='route("projects.export", { id: project.id })' target="_blank"
                                 class="font-medium text-zinc-600 dark:text-zinc-500 hover:underline mr-1">Export

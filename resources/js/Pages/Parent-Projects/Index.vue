@@ -143,6 +143,9 @@ const restoreHandler = (id) => {
                             <Link :href="route('projects.create', { parent_project_id: project.id })"
                                 class="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-1"> Add Project Item
                             </Link>
+                            <Link :href="route('projects.index', { parent_id: project.id })"
+                                class="font-medium text-red-600 dark:text-red-500 hover:underline mr-1">View Project Items
+                            </Link>
                             <Link :href="route('parent-projects.edit', { id: project.id })"
                                 class="font-medium text-gray-600 dark:text-gray-500 hover:underline mr-1"> Edit
                             </Link>
@@ -153,10 +156,10 @@ const restoreHandler = (id) => {
                                 class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Delete
                                 permanently</a>
                             <a v-if="$page.props.auth.user.is_admin && project.deleted_at != undefined && project.deleted_at != null"
-                                    href="#" @click.prevent="restoreHandler(project.id)"
-                                    class="px-3 py-2 text-sm font-medium text-center  text-gray-700 rounded-lg hover:underline focus:outline-none focus:ring-gray-300 mr-1">
-                                    Restore Project
-                                </a>
+                                href="#" @click.prevent="restoreHandler(project.id)"
+                                class="px-3 py-2 text-sm font-medium text-center  text-gray-700 rounded-lg hover:underline focus:outline-none focus:ring-gray-300 mr-1">
+                                Restore Project
+                            </a>
                         </td>
                     </tr>
 
