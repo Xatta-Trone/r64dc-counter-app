@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Exception;
+use App\Models\User;
 use Inertia\Inertia;
 use App\Models\Project;
 use Carbon\CarbonPeriod;
@@ -15,28 +16,45 @@ use Illuminate\Support\Facades\DB;
 use App\Exports\MultipleSheetExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Requests\CounterStoreRequest;
+use App\Http\Requests\Projects\ProjectsIndexRequest;
 
 class CounterController extends Controller
 {
-    public function index(Request $request)
+    public function index(ProjectsIndexRequest $request)
     {
         $projects = Project::Query()->withCount(['projectData',])->with(['user:id,name']);
 
-        if ($request->user()->is_admin == false) {
-            $projects = $projects->where('user_id', $request->user()->id);
-        } else {
-            $projects = $projects->withTrashed();
+
+        if ($request->is_deleted && $request->user()->is_admin) {
+            $projects->withTrashed()->whereNotNull('deleted_at');
         }
+
+        if ($request->user()->is_admin == false) {
+            $projects->where('user_id', $request->user()->id);
+        }
+
+        if ($request->date) {
+            $projects->whereDate('day', $request->date);
+        }
+
+        if ($request->user_id && $request->user()->is_admin) {
+            $projects->where('user_id', $request->user_id);
+        }
+
 
         $projects = $projects->when($request->search, function ($q) use ($request) {
             $q->where('title', 'like', '%' . $request->search . '%');
         })
             ->orderBy('id', 'desc')
-            ->paginate(10)
+            ->paginate($request->per_page)
             ->withQueryString();
+
+        $users = User::select(['id', 'name'])->orderBy('name', 'asc')->get();
 
         return Inertia::render('Projects/Index', [
             'projects' => $projects,
+            'filters' => $request->validated(),
+            'users' => $users ?? []
         ]);
     }
 

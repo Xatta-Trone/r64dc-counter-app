@@ -7,18 +7,47 @@ import PlusIcon from "@/Shared/Icons/PlusIcon.vue";
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import debounce from 'lodash/debounce'
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 
 
-defineProps({ projects: { type: Object } });
+let props = defineProps({
+    projects: { type: Object },
+    filters: { type: Object },
+    users: { type: Array },
+});
 
 // handle search
-let search = ref("")
+let search = ref(props.filters?.search ?? "")
+let user_id = ref(props.filters?.user_id ?? "")
+let is_deleted = ref(props.filters?.is_deleted ?? "")
+let date = ref(props.filters?.date ?? null)
 
-watch(search, debounce((val) => {
-    console.log(val)
-    router.get(route('projects.index'), { search: val }, { preserveState: true, replace: true });
+const clearFilters = () => {
+    search.value = "";
+    user_id.value = "";
+    is_deleted.value = "";
+    date.value = null;
+};
 
+watch(search, debounce(() => {
+    handleSearch();
 },));
+
+watch(is_deleted, debounce(() => {
+    handleSearch();
+},));
+watch(date, debounce(() => {
+    handleSearch();
+},));
+watch(user_id, debounce(() => {
+    handleSearch();
+},));
+
+const handleSearch = () => {
+    return router.get(route('projects.index'), { search: search.value, is_deleted: is_deleted.value, date: format(date.value), user_id: user_id.value }, { preserveState: true, replace: true });
+}
+
 
 const deleteHandler = (id, force = false) => {
     router.delete(route('projects.delete', { id: id, force: force }), {
@@ -30,6 +59,20 @@ const forceDeleteHandler = (id, force = false) => {
     router.delete(route('projects.delete', { id: id, force: force }), {
         onBefore: () => confirm('Are you sure you want to permanently delete this project?'),
     });
+};
+
+
+
+// In case of a range picker, you'll receive [Date, Date]
+const format = (date) => {
+    if (date == null || date == undefined) {
+        return
+    }
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`;
 };
 
 </script>
@@ -54,19 +97,48 @@ const forceDeleteHandler = (id, force = false) => {
         <!-- table -->
         <div class="bg-white shadow-sm px-2 py-3">
             <!-- search bar  -->
-            <div class="pb-4 bg-white dark:bg-gray-900 ml-3 mt-3">
-                <label for="table-search" class="sr-only">Search</label>
-                <div class="relative mt-1">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-                        </svg>
+            <!-- search bar  -->
+            <div class="pb-4 bg-white dark:bg-gray-900 ml-3 mt-3 flex">
+                <div class="grow">
+                    <label for="table-search" class="">Search</label>
+                    <div class="relative mt-1">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                            </svg>
+                        </div>
+                        <input type="text" id="table-search" v-model="search"
+                            class="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 w-full"
+                            placeholder="Search for items">
                     </div>
-                    <input type="text" id="table-search" v-model="search"
-                        class="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        placeholder="Search for items">
+                </div>
+                <div class="ml-5 grow">
+                    <label for="user_id" class="">Filter Surveyor</label>
+                    <select id="user_id" v-model="user_id"
+                        class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <option value="" selected>Select Surveyor</option>
+                        <option :value="user.id" v-for="user in users" :key="user.id + '-user'">{{ user.name }}</option>
+                    </select>
+                </div>
+                <div class="ml-5 grow">
+                    <label for="date" class="">Filter Date</label>
+                    <VueDatePicker class="w-full mt-1" v-model="date" :enable-time-picker="false" :format="format" />
+
+                </div>
+                <div class="ml-5 grow">
+                    <label for="is_deleted" class="">Show deleted</label>
+                    <select id="is_deleted" v-model="is_deleted"
+                        class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <option value="" selected>No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="ml-5">
+                    <label for="clear" class="block">Clear filters</label>
+                    <span @click="clearFilters"
+                        class="inline-block bg-gray-800 w-full text-center px-2 py-1.5 mt-1 cursor-pointer rounded-md text-white">X</span>
                 </div>
             </div>
             <!-- table -->
@@ -154,14 +226,15 @@ const forceDeleteHandler = (id, force = false) => {
                             </a>
                             <a href="#" @click.prevent="deleteHandler(project.id)" v-if="project.deleted_at == null"
                                 class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
-                            <a href="#" @click.prevent="forceDeleteHandler(project.id, true)" v-if="project.deleted_at != undefined && project.deleted_at != null"
-                                    class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Force Delete</a>
+                            <a href="#" @click.prevent="forceDeleteHandler(project.id, true)"
+                                v-if="project.deleted_at != undefined && project.deleted_at != null"
+                                class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Force Delete</a>
                         </td>
                     </tr>
 
                     <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                         v-show="projects.data.length == 0">
-                        <td colspan="4" class="text-center py-1">
+                        <td colspan="20" class="text-center py-1">
                             No data found
                         </td>
                     </tr>
@@ -169,6 +242,10 @@ const forceDeleteHandler = (id, force = false) => {
 
                 </tbody>
             </table>
+
+            <div class="-space-x-px text-base mt-3 ml-3">
+                {{ projects.total }} record(s)
+            </div>
             <!-- pagination -->
             <ul class="inline-flex -space-x-px text-base mt-3 mb-3 ml-3">
                 <li v-for="(link, i) in projects.links" :key="'link' + i">
