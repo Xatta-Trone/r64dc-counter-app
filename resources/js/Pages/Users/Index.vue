@@ -35,6 +35,7 @@ const restoreHandler = (id) => {
     });
 };
 
+
 const clearFilters = () => {
     search.value = "";
     active.value = "";
@@ -48,18 +49,22 @@ let active = ref(props.filters?.active ?? "")
 let is_admin = ref(props.filters?.is_admin ?? "")
 
 watch(search, debounce(function (val) {
-    router.get(route('users.index'), { search: val, active: active.value }, { preserveState: true, replace: true });
+     handleFilter();
 }, 300));
 
 watch(active, debounce(function (val) {
     search.value = ""
-    router.get(route('users.index'), { search: "", active: val, is_admin: is_admin.value }, { preserveState: true, replace: true });
+    handleFilter();
 }, 300));
 
 watch(is_admin, debounce(function (val) {
     search.value = ""
-    router.get(route('users.index'), { is_admin: val, active: active.value }, { preserveState: true, replace: true });
+    handleFilter();
 }, 300));
+
+const handleFilter = () => {
+    router.get(route('users.index'), { is_admin: is_admin.value, active: active.value, search: search.value }, { preserveState: true, replace: true });
+}
 
 
 

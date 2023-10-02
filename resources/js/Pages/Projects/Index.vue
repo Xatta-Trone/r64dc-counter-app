@@ -118,13 +118,13 @@ const format = (date) => {
                     <label for="user_id" class="">Filter Surveyor</label>
                     <select id="user_id" v-model="user_id"
                         class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="" selected>Select Surveyor</option>
+                        <option value="" selected>All Surveyor</option>
                         <option :value="user.id" v-for="user in users" :key="user.id + '-user'">{{ user.name }}</option>
                     </select>
                 </div>
                 <div class="ml-5 grow">
                     <label for="date" class="">Filter Date</label>
-                    <VueDatePicker class="w-full mt-1" v-model="date" :enable-time-picker="false" :format="format" />
+                    <VueDatePicker class="w-full mt-1" v-model="date" :enable-time-picker="false" :format="format" placeholder="Select date" />
 
                 </div>
                 <div class="ml-5 grow">
