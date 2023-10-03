@@ -12,23 +12,43 @@ import '@vuepic/vue-datepicker/dist/main.css';
 let props = defineProps({
     'times': Array,
     'project': Object,
+    'parents': Array,
 });
 
 
 onMounted(() => {
+    let params = new URLSearchParams(window.location.search)
+
+    const parent_project_id = params.get('parent_project_id')
+
+    if (parent_project_id != null) {
+        form.parent_project_id = parent_project_id
+        // update the value
+        updateTitle(parent_project_id)
+    }
+
     if (props.project) {
-        form.title = props.project.title;
+        form.title = form.title ? form.title : props.project.title;
         form.intersection = props.project.intersection;
         form.approach_name = props.project.approach_name;
         form.weather_condition = props.project.weather_condition
         form.day = new Date(props.project.day)
         form.start_time = props.project.first_project_data.start_time
         form.end_time = props.project.last_project_data.end_time
+        form.parent_project_id = props.project.parent_project_id ? props.project.parent_project_id : null
         form.items = props.project.first_project_data.data.map(element => { return { ...element, left: 0, through: 0, right: 0 } })
         updateKeyMap();
     }
 
 });
+
+const updateTitle = () => {
+    let item = props.parents?.find(item => item.id == form.parent_project_id);
+    if (item) {
+        form.title = item.title;
+    }
+
+}
 
 const form = useForm({
     title: null,
@@ -40,6 +60,7 @@ const form = useForm({
     intersection: "",
     approach_name: "",
     weather_condition: "",
+    parent_project_id: "",
 });
 
 const itemName = ref("")
@@ -195,6 +216,21 @@ const format = (date) => {
 
         <div class="bg-white shadow-sm px-4 py-3 rounded-sm">
             <form @submit.prevent="handleSubmit">
+                <div class="mb-6">
+                    <label for="parent_project_id" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">
+                        Project Folder
+                    </label>
+                    <select id="parent_project_id" v-model="form.parent_project_id" required @change="updateTitle"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 ">
+                        <option value="">Select Project Folder</option>
+                        <option v-for="parent in parents" :key="'parent' + parent.id" :value="parent.id">{{ parent.title }}
+                        </option>
+                    </select>
+                    <div v-if="form.errors.parent_project_id" class="mt-2 text-sm text-red-600 dark:text-red-500">{{
+                        form.errors.parent_project_id }}
+                    </div>
+                </div>
+
                 <div class="mb-6">
                     <label for="title" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">Project
                         Title</label>

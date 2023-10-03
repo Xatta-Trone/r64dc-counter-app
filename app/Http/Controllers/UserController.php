@@ -11,6 +11,7 @@ use App\Mail\UserCreatedMail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Requests\UserCreateRequest;
+use App\Http\Requests\Users\UsersIndexRequest;
 use Exception;
 
 class UserController extends Controller
@@ -18,24 +19,43 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(UsersIndexRequest $request)
     {
         if ($request->user()->is_admin == false) {
             abort(403);
         }
 
-        $users = User::Query()
-            ->withTrashed()
-            ->when($request->search, function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')->orWhere('email', 'like', '%' . $request->search . '%');
-            })
+        $users = User::Query();
+
+        if ($request->active == "") {
+            // all users
+            $users->withTrashed();
+        }
+
+        if ($request->active == 2) {
+            // deleted users
+            $users->withTrashed()->whereNotNull('deleted_at');
+        }
+
+        // admin filters
+        if ($request->is_admin == 1) {
+            $users->where('is_admin', 1);
+        }
+
+        if ($request->is_admin == 0) {
+            $users->where('is_admin', 0);
+        }
+
+        $users = $users->when($request->search, function ($q) use ($request) {
+            $q->where('name', 'like', '%' . $request->search . '%')->orWhere('email', 'like', '%' . $request->search . '%');
+        })
             ->orderBy('id', 'desc')
-            ->paginate(10)
+            ->paginate($request->per_page)
             ->withQueryString();
 
         return Inertia::render('Users/Index', [
             'users' => $users,
-            'filters' => ['search' => $request->search]
+            'filters' => $request->validated()
         ]);
     }
 
@@ -79,9 +99,13 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Request $request, string $id)
     {
-        $user = User::findOrFail($id);
+        if ($request->user()->is_admin == false) {
+            abort(403);
+        }
+
+        $user = User::withTrashed()->findOrFail($id);
         return Inertia::render('Users/Edit', ['user' => $user]);
     }
 
@@ -95,7 +119,7 @@ class UserController extends Controller
         }
 
         try {
-            $user = User::findOrFail($id);
+            $user = User::withTrashed()->findOrFail($id);
             $user->update($request->validated());
 
             return redirect()->route('users.index')->with('success', 'User Updated.');
@@ -121,5 +145,16 @@ class UserController extends Controller
 
 
         return redirect()->route('users.index')->with('success', 'User Deleted.');
+    }
+
+    public function restore(Request $request, string $id)
+    {
+        if ($request->user()->is_admin == false) {
+            abort(403);
+        }
+
+        User::withTrashed()->findOrFail($id)->update(['deleted_at' => null]);
+
+        return redirect()->route('users.index')->with('success', 'User Restored.');
     }
 }

@@ -7,97 +7,66 @@ import PlusIcon from "@/Shared/Icons/PlusIcon.vue";
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import debounce from 'lodash/debounce'
-import VueDatePicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css';
+
 
 
 let props = defineProps({
     projects: { type: Object },
     filters: { type: Object },
-    users: { type: Array },
-    parents: { type: Array },
 });
 
 // handle search
 let search = ref(props.filters?.search ?? "")
-let user_id = ref(props.filters?.user_id ?? "")
 let is_deleted = ref(props.filters?.is_deleted ?? "")
-let date = ref(props.filters?.date ?? null)
-let parent_id = ref(props.filters?.parent_id ?? "")
-
-const clearFilters = () => {
-    search.value = "";
-    user_id.value = "";
-    is_deleted.value = "";
-    date.value = null;
-    parent_id.value = ""
-};
 
 watch(search, debounce(() => {
     handleSearch();
 },));
-
-watch(parent_id, debounce(() => {
-    handleSearch();
-},));
-
 watch(is_deleted, debounce(() => {
-    handleSearch();
-},));
-watch(date, debounce(() => {
-    handleSearch();
-},));
-watch(user_id, debounce(() => {
+    search.value = "";
     handleSearch();
 },));
 
 const handleSearch = () => {
-    return router.get(route('projects.index'), { search: search.value, is_deleted: is_deleted.value, date: format(date.value), user_id: user_id.value, parent_id: parent_id.value }, { preserveState: true, replace: true });
+    return router.get(route('parent-projects.index'), { search: search.value, is_deleted: is_deleted.value }, { preserveState: true, replace: true });
 }
 
 
-const deleteHandler = (id, force = false) => {
-    router.delete(route('projects.delete', { id: id, force: force }), {
+const deleteHandler = (project, force = false) => {
+    router.delete(route('parent-projects.destroy', { parent_project: project, force: force }), {
         onBefore: () => confirm('Are you sure you want to delete this project?'),
     });
 };
 
-const forceDeleteHandler = (id, force = false) => {
-    router.delete(route('projects.delete', { id: id, force: force }), {
+const forceDeleteHandler = (project, force = true) => {
+    router.delete(route('parent-projects.destroy', { parent_project: project, force: force }), {
         onBefore: () => confirm('Are you sure you want to permanently delete this project?'),
     });
 };
 
-
-
-// In case of a range picker, you'll receive [Date, Date]
-const format = (date) => {
-    if (date == null || date == undefined) {
-        return
-    }
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear();
-
-    return `${day}-${month}-${year}`;
+const restoreHandler = (id) => {
+    router.delete(route('parent-projects.restore', { id: id, force: true }), {
+        onBefore: () => confirm('Are you sure you want to restore this project?'),
+    });
 };
+
 
 </script>
 
 <template>
-    <Head title="Projects" />
+    <Head title="Project Folders" />
     <AdminLayout>
         <!-- title -->
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="text-2xl font-bold text-slate-600 dark:text-white">
-                Projects
+                Project Folders
             </h2>
 
             <div>
-                <Link :href="route('projects.create')"
+                <Link :href="route('parent-projects.create')"
                     class="flex items-center gap-2 text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                 <PlusIcon />
-                Create Project
+                Create Project Folder
                 </Link>
             </div>
         </div>
@@ -121,31 +90,7 @@ const format = (date) => {
                             placeholder="Search for items">
                     </div>
                 </div>
-
                 <div class="ml-5 grow">
-                    <label for="parent_id" class="">Filter Project Folder</label>
-                    <select id="parent_id" v-model="parent_id"
-                        class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="" selected>Select Project Folder</option>
-                        <option :value="parent.id" v-for="parent in parents" :key="parent.id + '-parent'">{{ parent.title }}
-                        </option>
-                    </select>
-                </div>
-                <div class="ml-5 grow" v-if="$page.props.auth.user.is_admin">
-                    <label for="user_id" class="">Filter Surveyor</label>
-                    <select id="user_id" v-model="user_id"
-                        class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="" selected>All Surveyor</option>
-                        <option :value="user.id" v-for="user in users" :key="user.id + '-user'">{{ user.name }}</option>
-                    </select>
-                </div>
-                <div class="ml-5 grow">
-                    <label for="date" class="">Filter Date</label>
-                    <VueDatePicker class="w-full mt-1" v-model="date" :enable-time-picker="false" :format="format"
-                        placeholder="Select date" />
-
-                </div>
-                <div class="ml-5 grow" v-if="$page.props.auth.user.is_admin">
                     <label for="is_deleted" class="">Show deleted</label>
                     <select id="is_deleted" v-model="is_deleted"
                         class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
@@ -153,11 +98,7 @@ const format = (date) => {
                         <option value="1">Yes</option>
                     </select>
                 </div>
-                <div class="ml-5">
-                    <label for="clear" class="block">Clear filters</label>
-                    <span @click="clearFilters"
-                        class="inline-block bg-gray-800 w-full text-center px-2 py-1.5 mt-1 cursor-pointer rounded-md text-white">X</span>
-                </div>
+
             </div>
             <!-- table -->
             <table class="w-full text-md text-left text-gray-500 dark:text-gray-400 overflow-x-auto">
@@ -167,25 +108,10 @@ const format = (date) => {
                             #
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            Project
+                            Project Name
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            Slots
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Surveyor
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Day
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Intersection
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Approach
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            Weather
+                            Project Counts
                         </th>
                         <th scope="col" class="px-6 py-3" v-show="$page.props.auth.user.is_admin">
                             Deleted
@@ -205,22 +131,7 @@ const format = (date) => {
                             {{ project.title }}
                         </td>
                         <td class="px-6 py-4">
-                            {{ project.project_data_count }}
-                        </td>
-                        <td class="px-6 py-4">
-                            {{ project.user ? project.user.name : "" }}
-                        </td>
-                        <td class="px-6 py-4">
-                            {{ project.day }}
-                        </td>
-                        <td class="px-6 py-4">
-                            {{ project.intersection }}
-                        </td>
-                        <td class="px-6 py-4">
-                            {{ project.approach_name }}
-                        </td>
-                        <td class="px-6 py-4">
-                            {{ project.weather_condition }}
+                            {{ project.projects_count }}
                         </td>
                         <td class="px-6 py-3" v-show="$page.props.auth.user.is_admin">
                             <span v-if="project.deleted_at != null"
@@ -229,27 +140,26 @@ const format = (date) => {
                                 class="bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">No</span>
                         </td>
                         <td class="px-6 py-4">
-                            <Link :href="`/projects-slots/${project.id}`"
-                                class="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-1">Time
-                            Slots
+                            <Link :href="route('projects.create', { parent_project_id: project.id })"
+                                class="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-1"> Add Project Item
                             </Link>
-                            <Link :href='route("projects.count", { id: project.id })'
-                                class="font-medium text-green-600 dark:text-green-500 hover:underline mr-1">Counting page
+                            <Link :href="route('projects.index', { parent_id: project.id })"
+                                class="font-medium text-red-600 dark:text-red-500 hover:underline mr-1">View Project Items
                             </Link>
-                            <Link :href='route("projects.duplicate", { id: project.id })'
-                                class="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-1">Duplicate
+                            <Link :href="route('parent-projects.edit', { id: project.id })"
+                                class="font-medium text-gray-600 dark:text-gray-500 hover:underline mr-1"> Edit
                             </Link>
-                            <Link :href='route("projects.edit", { id: project.id })'
-                                class="font-medium text-red-600 dark:text-red-500 hover:underline mr-1">Edit
-                            </Link>
-                            <a :href='route("projects.export", { id: project.id })' target="_blank"
-                                class="font-medium text-zinc-600 dark:text-zinc-500 hover:underline mr-1">Export
-                            </a>
-                            <a href="#" @click.prevent="deleteHandler(project.id)" v-if="project.deleted_at == null"
+                            <a href="#" @click.prevent="deleteHandler(project)" v-if="project.deleted_at == null"
                                 class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
-                            <a href="#" @click.prevent="forceDeleteHandler(project.id, true)"
+                            <a href="#" @click.prevent="forceDeleteHandler(project, true)"
                                 v-if="project.deleted_at != undefined && project.deleted_at != null"
-                                class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Force Delete</a>
+                                class="mr-1 font-medium text-red-600 dark:text-red-500 hover:underline">Delete
+                                permanently</a>
+                            <a v-if="$page.props.auth.user.is_admin && project.deleted_at != undefined && project.deleted_at != null"
+                                href="#" @click.prevent="restoreHandler(project.id)"
+                                class="px-3 py-2 text-sm font-medium text-center  text-gray-700 rounded-lg hover:underline focus:outline-none focus:ring-gray-300 mr-1">
+                                Restore Project
+                            </a>
                         </td>
                     </tr>
 

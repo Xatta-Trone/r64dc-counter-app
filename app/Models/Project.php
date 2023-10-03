@@ -37,4 +37,9 @@ class Project extends Model
         return $this->hasOne(ProjectTimeData::class)->latestOfMany();
     }
 
+    public function parentProject()
+    {
+        return $this->belongsTo(ParentProject::class);
+    }
+
 }
