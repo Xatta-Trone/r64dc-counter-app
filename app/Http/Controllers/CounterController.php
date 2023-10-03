@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use Exception;
+use App\Models\User;
 use Inertia\Inertia;
 use App\Models\Project;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Models\ParentProject;
 use Illuminate\Support\Carbon;
 use App\Exports\ProjectsExport;
 use App\Models\ProjectTimeData;
@@ -15,34 +17,59 @@ use Illuminate\Support\Facades\DB;
 use App\Exports\MultipleSheetExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Requests\CounterStoreRequest;
+use App\Http\Requests\ProjectUpdateRequest;
+use App\Http\Requests\Projects\ProjectsIndexRequest;
 
 class CounterController extends Controller
 {
-    public function index(Request $request)
+    public function index(ProjectsIndexRequest $request)
     {
         $projects = Project::Query()->withCount(['projectData',])->with(['user:id,name']);
 
-        if ($request->user()->is_admin == false) {
-            $projects = $projects->where('user_id', $request->user()->id);
-        } else {
-            $projects = $projects->withTrashed();
+        if ($request->parent_id) {
+            $projects->where('parent_project_id', $request->parent_id);
         }
+
+
+        if ($request->is_deleted && $request->user()->is_admin) {
+            $projects->withTrashed()->whereNotNull('deleted_at');
+        }
+
+        if ($request->user()->is_admin == false) {
+            $projects->where('user_id', $request->user()->id);
+        }
+
+        if ($request->date) {
+            $projects->whereDate('day', $request->date);
+        }
+
+        if ($request->user_id && $request->user()->is_admin) {
+            $projects->where('user_id', $request->user_id);
+        }
+
 
         $projects = $projects->when($request->search, function ($q) use ($request) {
             $q->where('title', 'like', '%' . $request->search . '%');
         })
             ->orderBy('id', 'desc')
-            ->paginate(10)
+            ->paginate($request->per_page)
             ->withQueryString();
+
+        $users = User::select(['id', 'name'])->orderBy('name', 'asc')->get();
+        $parents = ParentProject::select('id', 'title')->orderBy('id', 'desc')->get();
 
         return Inertia::render('Projects/Index', [
             'projects' => $projects,
+            'filters' => $request->validated(),
+            'users' => $users ?? [],
+            'parents' => $parents,
         ]);
     }
 
     public function create()
     {
         $c = CarbonPeriod::since('00:00')->minutes(5)->until('24:00')->toArray();
+        $parents = ParentProject::select('id', 'title')->orderBy('id', 'desc')->get();
 
 
         $data = [];
@@ -54,7 +81,7 @@ class CounterController extends Controller
             }
         }
 
-        return Inertia::render('Projects/Create', ['times' => $data]);
+        return Inertia::render('Projects/Create', ['times' => $data, 'parents' => $parents]);
     }
 
     public function duplicate(int $id)
@@ -71,7 +98,10 @@ class CounterController extends Controller
                 $data[] = $a->format('H:i');
             }
         }
-        return Inertia::render('Projects/Create', ['times' => $data, 'project' => $project]);
+
+        $parents = ParentProject::select('id', 'title')->orderBy('id', 'desc')->get();
+
+        return Inertia::render('Projects/Create', ['times' => $data, 'project' => $project, 'parents' => $parents]);
     }
 
     public function store(CounterStoreRequest $request)
@@ -116,6 +146,7 @@ class CounterController extends Controller
                 'approach_name' => $request->approach_name,
                 'weather_condition' => $request->weather_condition,
                 'user_id' => $request->user()->id,
+                'parent_project_id' => $request->parent_project_id,
             ];
 
 
@@ -123,10 +154,31 @@ class CounterController extends Controller
                 $project = Project::create($data);
                 $project->projectData()->createMany($projectData);
             });
-            return redirect()->route('projects.index')->with('success', "Project Created.");
+            return redirect()->route('projects.index', ['parent_id' => $request->parent_project_id])->with('success', "Project Created.");
         } catch (Exception $e) {
             return redirect()->back()->with('error', "Error creating project." . $e->getMessage());
         }
+    }
+
+    public function edit(string $id)
+    {
+        $project = Project::findOrFail($id);
+        $parents = ParentProject::select('id', 'title')->orderBy('id', 'desc')->get();
+
+        return Inertia::render('Projects/Edit', ['project' => $project, 'parents' => $parents]);
+    }
+
+    public function update(ProjectUpdateRequest $request, string $id)
+    {
+
+        $project = Project::findOrFail($id);
+
+        if ($project->user_id != $request->user()->id &&  $request->user()->is_admin == false) {
+            abort(403);
+        }
+
+        $project->update(array_merge($request->validated(), ['day' => Carbon::parse($request->day)->format('Y-m-d')]));
+        return redirect()->route('projects.index')->with('success', "Project Updated.");
     }
 
     public function project(int $id)
@@ -201,6 +253,5 @@ class CounterController extends Controller
         $project = Project::with(['user', 'projectData'])->findOrFail($id);
         $slug = Str::slug($project->title);
         return Excel::download(new MultipleSheetExport($project), 'projects-' . $slug . '.xlsx');
-
     }
 }
