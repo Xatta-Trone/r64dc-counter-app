@@ -27,7 +27,7 @@ onMounted(() => {
         form.day = new Date(props.project.day)
         form.parent_project_id = props.project.parent_project_id ? props.project.parent_project_id : null
 
-        if (props.project.parent_project_id) {
+        if (props.project.parent_project_id !== null) {
             handleProjectChange(props.project.parent_project_id)
         }
     }
