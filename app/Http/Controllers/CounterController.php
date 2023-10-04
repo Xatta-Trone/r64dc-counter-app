@@ -147,6 +147,7 @@ class CounterController extends Controller
                 'weather_condition' => $request->weather_condition,
                 'user_id' => $request->user()->id,
                 'parent_project_id' => $request->parent_project_id,
+                'project_intersection_id' => $request->project_intersection_id,
             ];
 
 

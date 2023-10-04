@@ -25,6 +25,7 @@ class ProjectUpdateRequest extends FormRequest
             'title' => ['required', 'string'],
             'day' => ['date'],
             'intersection' => ['required', 'string'],
+            'project_intersection_id' => ['nullable'],
             'approach_name' => ['required', 'string'],
             'weather_condition' => ['required', 'string'],
             'parent_project_id' => ['required', 'exists:parent_projects,id']
