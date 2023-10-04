@@ -111,7 +111,7 @@ const restoreHandler = (id) => {
                             Project Name
                         </th>
                         <th scope="col" class="px-6 py-3">
-                            Project Counts
+                            Projects Count <br> (Intersections Count)
                         </th>
                         <th scope="col" class="px-6 py-3" v-show="$page.props.auth.user.is_admin">
                             Deleted
@@ -131,7 +131,7 @@ const restoreHandler = (id) => {
                             {{ project.title }}
                         </td>
                         <td class="px-6 py-4">
-                            {{ project.projects_count }}
+                            {{ project.projects_count }} ({{ project.intersections_count }})
                         </td>
                         <td class="px-6 py-3" v-show="$page.props.auth.user.is_admin">
                             <span v-if="project.deleted_at != null"
