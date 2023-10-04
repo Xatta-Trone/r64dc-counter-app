@@ -17,4 +17,8 @@ class ParentProject extends Model
     {
         return $this->hasMany(Project::class);
     }
+    public function intersections()
+    {
+        return $this->hasMany(ProjectIntersection::class);
+    }
 }

