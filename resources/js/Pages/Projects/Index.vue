@@ -1,7 +1,7 @@
 
 <script  setup>
 import { Link } from "@inertiajs/vue3";
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { router } from '@inertiajs/vue3';
 import PlusIcon from "@/Shared/Icons/PlusIcon.vue";
 import AdminLayout from '@/Layouts/AdminLayout.vue';
@@ -9,6 +9,7 @@ import { Head } from '@inertiajs/vue3';
 import debounce from 'lodash/debounce'
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+import axios from "axios";
 
 
 let props = defineProps({
@@ -18,19 +19,33 @@ let props = defineProps({
     parents: { type: Array },
 });
 
+onMounted(() => {
+    let params = new URLSearchParams(window.location.search)
+
+    const parent = params.get('parent_id')
+
+    if (parent) {
+        parent_id.value = parent
+        handleProjectChange();
+    }
+});
+
 // handle search
 let search = ref(props.filters?.search ?? "")
 let user_id = ref(props.filters?.user_id ?? "")
 let is_deleted = ref(props.filters?.is_deleted ?? "")
 let date = ref(props.filters?.date ?? null)
 let parent_id = ref(props.filters?.parent_id ?? "")
+let project_intersection_id = ref(props.filters?.project_intersection_id ?? "")
 
 const clearFilters = () => {
     search.value = "";
     user_id.value = "";
     is_deleted.value = "";
     date.value = null;
-    parent_id.value = ""
+    parent_id.value = "";
+    project_intersection_id.value = "";
+    intersections.value = [];
 };
 
 watch(search, debounce(() => {
@@ -50,9 +65,12 @@ watch(date, debounce(() => {
 watch(user_id, debounce(() => {
     handleSearch();
 },));
+watch(project_intersection_id, debounce(() => {
+    handleSearch();
+},));
 
 const handleSearch = () => {
-    return router.get(route('projects.index'), { search: search.value, is_deleted: is_deleted.value, date: format(date.value), user_id: user_id.value, parent_id: parent_id.value }, { preserveState: true, replace: true });
+    return router.get(route('projects.index'), { search: search.value, is_deleted: is_deleted.value, date: format(date.value), user_id: user_id.value, parent_id: parent_id.value, project_intersection_id: project_intersection_id.value }, { preserveState: true, replace: true });
 }
 
 
@@ -82,6 +100,23 @@ const format = (date) => {
     return `${day}-${month}-${year}`;
 };
 
+let intersections = ref([]);
+const handleProjectChange = () => {
+    intersections.value = [];
+    project_intersection_id.value = "";
+    axios.get(`/api/intersections?parent_id=${parent_id.value}`)
+        .then(res => {
+            // console.log(res.data)
+            intersections.value = res.data ? res.data : [];
+        })
+        .catch(err => {
+            console.log(err)
+            alert('error occurred');
+            intersections.value = []
+        });
+
+};
+
 </script>
 
 <template>
@@ -104,59 +139,76 @@ const format = (date) => {
         <!-- table -->
         <div class="bg-white shadow-sm px-2 py-3">
             <!-- search bar  -->
-            <!-- search bar  -->
-            <div class="pb-4 bg-white dark:bg-gray-900 ml-3 mt-3 flex">
-                <div class="grow">
-                    <label for="table-search" class="">Search</label>
-                    <div class="relative mt-1">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-                            </svg>
+            <div class="pb-4 bg-white dark:bg-gray-900 ml-3 mt-3">
+                <div class="flex mb-1">
+                    <div class="grow">
+                        <label for="table-search" class="">Search</label>
+                        <div class="relative mt-1">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                                </svg>
+                            </div>
+                            <input type="text" id="table-search" v-model="search"
+                                class="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 w-full"
+                                placeholder="Search for items">
                         </div>
-                        <input type="text" id="table-search" v-model="search"
-                            class="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 w-full"
-                            placeholder="Search for items">
                     </div>
+                    <div class="ml-5 grow">
+                        <label for="parent_id" class="">Filter Project Folder</label>
+                        <select id="parent_id" v-model="parent_id" @change="handleProjectChange"
+                            class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            <option value="" selected>Select Project Folder</option>
+                            <option :value="parent.id" v-for="parent in parents" :key="parent.id + '-parent'">{{
+                                parent.title }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="ml-5 grow">
+                        <label for="project_intersection_id" class="">Filter Intersection</label>
+                        <select id="project_intersection_id" v-model="project_intersection_id"
+                            class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            <option value="" selected>Select Intersection</option>
+                            <option :value="intersection.id" v-for="intersection in intersections"
+                                :key="intersection.id + '-intersection'">{{
+                                    intersection.intersection_name }}
+                            </option>
+                        </select>
+                    </div>
+
                 </div>
 
-                <div class="ml-5 grow">
-                    <label for="parent_id" class="">Filter Project Folder</label>
-                    <select id="parent_id" v-model="parent_id"
-                        class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="" selected>Select Project Folder</option>
-                        <option :value="parent.id" v-for="parent in parents" :key="parent.id + '-parent'">{{ parent.title }}
-                        </option>
-                    </select>
-                </div>
-                <div class="ml-5 grow" v-if="$page.props.auth.user.is_admin">
-                    <label for="user_id" class="">Filter Surveyor</label>
-                    <select id="user_id" v-model="user_id"
-                        class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="" selected>All Surveyor</option>
-                        <option :value="user.id" v-for="user in users" :key="user.id + '-user'">{{ user.name }}</option>
-                    </select>
-                </div>
-                <div class="ml-5 grow">
-                    <label for="date" class="">Filter Date</label>
-                    <VueDatePicker class="w-full mt-1" v-model="date" :enable-time-picker="false" :format="format"
-                        placeholder="Select date" />
+                <div class="flex">
+                    <div class="ml grow" v-if="$page.props.auth.user.is_admin">
+                        <label for="user_id" class="">Filter Surveyor</label>
+                        <select id="user_id" v-model="user_id"
+                            class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            <option value="" selected>All Surveyor</option>
+                            <option :value="user.id" v-for="user in users" :key="user.id + '-user'">{{ user.name }}</option>
+                        </select>
+                    </div>
+                    <div class="ml-5 grow">
+                        <label for="date" class="">Filter Date</label>
+                        <VueDatePicker class="w-full mt-1" v-model="date" :enable-time-picker="false" :format="format"
+                            placeholder="Select date" />
 
-                </div>
-                <div class="ml-5 grow" v-if="$page.props.auth.user.is_admin">
-                    <label for="is_deleted" class="">Show deleted</label>
-                    <select id="is_deleted" v-model="is_deleted"
-                        class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="" selected>No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-                <div class="ml-5">
-                    <label for="clear" class="block">Clear filters</label>
-                    <span @click="clearFilters"
-                        class="inline-block bg-gray-800 w-full text-center px-2 py-1.5 mt-1 cursor-pointer rounded-md text-white">X</span>
+                    </div>
+                    <div class="ml-5 grow" v-if="$page.props.auth.user.is_admin">
+                        <label for="is_deleted" class="">Show deleted</label>
+                        <select id="is_deleted" v-model="is_deleted"
+                            class="mt-1 block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg w-full bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            <option value="" selected>No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="ml-5">
+                        <label for="clear" class="block">Clear filters</label>
+                        <span @click="clearFilters"
+                            class="inline-block bg-gray-800 w-full text-center px-2 py-1.5 mt-1 cursor-pointer rounded-md text-white">X</span>
+                    </div>
                 </div>
             </div>
             <!-- table -->
