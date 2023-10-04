@@ -43,6 +43,10 @@ class CounterController extends Controller
             $projects->whereDate('day', $request->date);
         }
 
+        if ($request->project_intersection_id) {
+            $projects->where('project_intersection_id', $request->project_intersection_id);
+        }
+
         if ($request->user_id && $request->user()->is_admin) {
             $projects->where('user_id', $request->user_id);
         }
