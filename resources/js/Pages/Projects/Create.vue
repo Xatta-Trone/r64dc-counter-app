@@ -6,6 +6,8 @@ import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+import axios from 'axios';
+import Required from '../../Shared/Required.vue'
 
 
 
@@ -25,11 +27,13 @@ onMounted(() => {
         form.parent_project_id = parent_project_id
         // update the value
         updateTitle(parent_project_id)
+        // handleProjectChange(parent_project_id);
     }
 
     if (props.project) {
         form.title = form.title ? form.title : props.project.title;
         form.intersection = props.project.intersection;
+        form.project_intersection_id = props.project.project_intersection_id;
         form.approach_name = props.project.approach_name;
         form.weather_condition = props.project.weather_condition
         form.day = new Date(props.project.day)
@@ -38,15 +42,24 @@ onMounted(() => {
         form.parent_project_id = props.project.parent_project_id ? props.project.parent_project_id : null
         form.items = props.project.first_project_data.data.map(element => { return { ...element, left: 0, through: 0, right: 0 } })
         updateKeyMap();
+
+        if (props.project.parent_project_id) {
+            handleProjectChange(props.project.parent_project_id)
+        }
     }
 
 });
 
 const updateTitle = () => {
+    form.intersection = "";
+    form.project_intersection_id = "";
     let item = props.parents?.find(item => item.id == form.parent_project_id);
     if (item) {
         form.title = item.title;
+        handleProjectChange(item.id);
     }
+
+
 
 }
 
@@ -58,10 +71,13 @@ const form = useForm({
     interval: 5,
     day: null,
     intersection: "",
+    project_intersection_id: "",
     approach_name: "",
     weather_condition: "",
     parent_project_id: "",
 });
+
+
 
 const itemName = ref("")
 
@@ -196,6 +212,31 @@ const format = (date) => {
     return `${day}-${month}-${year}`;
 };
 
+let intersections = ref([]);
+const handleProjectChange = (id) => {
+    axios.get(`/api/intersections?parent_id=${id}`)
+        .then(res => {
+            // console.log(res.data)
+            intersections.value = res.data;
+        })
+        .catch(err => {
+            console.log(err)
+            alert('error occurred');
+            intersections.value = []
+        });
+
+};
+
+const handleIntersectionChange = () => {
+    let intersection = intersections?.value.find(item => item.id == form.project_intersection_id);
+    if (intersection) {
+        form.intersection = intersection.intersection_name
+    } else {
+        form.intersection = ""
+    }
+
+};
+
 </script>
 <template>
     <AdminLayout>
@@ -219,6 +260,7 @@ const format = (date) => {
                 <div class="mb-6">
                     <label for="parent_project_id" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">
                         Project Folder
+                        <Required />
                     </label>
                     <select id="parent_project_id" v-model="form.parent_project_id" required @change="updateTitle"
                         class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 ">
@@ -233,10 +275,12 @@ const format = (date) => {
 
                 <div class="mb-6">
                     <label for="title" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">Project
-                        Title</label>
+                        Title
+                        <Required />
+                    </label>
                     <input type="text" id="title"
                         class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
-                        v-model="form.title" required>
+                        v-model="form.title" required :readonly="$page.props.auth.user.is_admin == false">
                     <div v-if="form.errors.title" class="mt-2 text-sm text-red-600 dark:text-red-500">{{ form.errors.title
                     }}
                     </div>
@@ -246,6 +290,7 @@ const format = (date) => {
                     <div class="flex-auto">
                         <label for="startTime" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">
                             Start time
+                            <Required />
                         </label>
                         <select id="startTime" v-model="form.start_time" required
                             class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 ">
@@ -259,6 +304,7 @@ const format = (date) => {
                     <div class="flex-auto ml-3">
                         <label for="endTime" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">
                             End time
+                            <Required />
                         </label>
                         <select id="endTime" v-model="form.end_time" required
                             class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 ">
@@ -273,6 +319,7 @@ const format = (date) => {
                     <div class="flex-auto ml-3">
                         <label for="interval" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">
                             Interval (minutes)
+                            <Required />
                         </label>
                         <select id="interval" v-model="form.interval" required
                             class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 ">
@@ -299,6 +346,7 @@ const format = (date) => {
                     <div class="flex-auto">
                         <label class="block mb-2 text-md font-medium text-gray-900 dark:text-white">
                             Day
+                            <Required />
                         </label>
                         <VueDatePicker class="w-full" v-model="form.day" :enable-time-picker="false" :format="format">
                         </VueDatePicker>
@@ -306,19 +354,29 @@ const format = (date) => {
                     <div class="flex-auto ml-3">
                         <label for="intersection" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">
                             Intersection
+                            <Required />
                         </label>
-                        <input type="text" id="intersection"
+                        <!-- <input type="text" id="intersection"
                             class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
-                            v-model="form.intersection" required>
-                        <div v-if="form.errors.intersection" class="mt-2 text-sm text-red-600 dark:text-red-500">{{
-                            form.errors.intersection
-                        }}
+                            v-model="form.intersection" required> -->
+                        <select id="intersection" v-model="form.project_intersection_id" required
+                            @change="handleIntersectionChange"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 ">
+                            <option value="">Select Intersection</option>
+                            <option v-for="intersection in intersections" :key="'intersection' + intersection.id"
+                                :value="intersection.id">{{ intersection.intersection_name }}</option>
+                        </select>
+                        <div v-if="form.errors.project_intersection_id" class="mt-2 text-sm text-red-600 dark:text-red-500">
+                            {{
+                                form.errors.intersection
+                            }}
                         </div>
                     </div>
 
                     <div class="flex-auto ml-3">
                         <label for="approach" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">
                             Approach Name
+                            <Required />
                         </label>
                         <input type="text" id="approach"
                             class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
@@ -331,6 +389,7 @@ const format = (date) => {
                     <div class="flex-auto ml-3">
                         <label for="weather" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">
                             Weather Condition
+                            <Required />
                         </label>
                         <select id="weather" v-model="form.weather_condition" required
                             class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 ">
@@ -346,10 +405,6 @@ const format = (date) => {
                     </div>
 
                 </div>
-
-
-
-
 
                 <!-- items -->
                 <div class="mt-6" v-show="form.items.length > 0">
@@ -395,11 +450,8 @@ const format = (date) => {
         </div>
 
 
-    </AdminLayout>
-</template>
-<style>
-.dp__action_select {
+</AdminLayout></template>
+<style>.dp__action_select {
     background-color: #000000 !important;
     color: white !important;
-}
-</style>
+}</style>

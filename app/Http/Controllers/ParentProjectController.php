@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ParentProjectIndexRequest;
 use Inertia\Inertia;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use App\Models\ParentProject;
+use Illuminate\Support\Facades\DB;
+use App\Models\ProjectIntersection;
+use App\Http\Requests\ParentProjectIndexRequest;
 use App\Http\Requests\ParentProjectStoreRequest;
 
 class ParentProjectController extends Controller
@@ -15,7 +18,7 @@ class ParentProjectController extends Controller
      */
     public function index(ParentProjectIndexRequest $request)
     {
-        $projects = ParentProject::query()->withCount(['projects',]);
+        $projects = ParentProject::query()->withCount(['projects', 'intersections']);
 
         if ($request->is_deleted && $request->user()->is_admin) {
             $projects->withTrashed()->whereNotNull('deleted_at');
@@ -47,10 +50,16 @@ class ParentProjectController extends Controller
      */
     public function store(ParentProjectStoreRequest $request)
     {
+
         if ($request->user()->is_admin == false) {
             abort(403);
         }
-        $project = ParentProject::create($request->validated());
+
+        DB::transaction(function () use ($request) {
+            $project = ParentProject::create(['title' => $request->title]);
+            $project->intersections()->createMany($request->intersections);
+        });
+
         return redirect()->route('parent-projects.index')->with('success', "Project Folder Created.");
     }
 
@@ -70,7 +79,7 @@ class ParentProjectController extends Controller
         if ($request->user()->is_admin == false) {
             abort(403);
         }
-        $project = ParentProject::findOrFail($id);
+        $project = ParentProject::with('intersections')->findOrFail($id);
         return Inertia::render('Parent-Projects/Edit', ['project' => $project]);
     }
 
@@ -79,10 +88,41 @@ class ParentProjectController extends Controller
      */
     public function update(ParentProjectStoreRequest $request, string $id)
     {
+
         if ($request->user()->is_admin == false) {
             abort(403);
         }
-        $project = ParentProject::findOrFail($id)->update($request->validated());
+
+        DB::transaction(function () use ($request, $id) {
+
+            $project = ParentProject::with('intersections')->findOrFail($id);
+
+            $intersections = [];
+            $updateNeeded = [];
+
+            foreach ($request->intersections as $intersection) {
+                $intersections[] = [
+                    'parent_project_id' => $intersection['parent_project_id'] ?? $id,
+                    'intersection_name' => $intersection['intersection_name'],
+                    'id' => $intersection['id'] ?? null,
+                ];
+
+                if (isset($intersection['id']) && $intersection['id'] !== null && $project->intersections->firstWhere('id', $intersection['id'])->intersection_name != $intersection['intersection_name']) {
+                    $updateNeeded[] = $intersection;
+                }
+            }
+
+            $project->update(['title' => $request->title]);
+
+            ProjectIntersection::upsert($intersections, ['parent_project_id', 'id'], ['intersection_name']);
+
+            if (count($updateNeeded) > 0) {
+                foreach ($updateNeeded as $intersection) {
+                    Project::where('project_intersection_id', $intersection['id'])->update(['intersection' => $intersection['intersection_name']]);
+                }
+
+            }
+        });
         return redirect()->route('parent-projects.index')->with('success', "Project Folder Updated.");
     }
 

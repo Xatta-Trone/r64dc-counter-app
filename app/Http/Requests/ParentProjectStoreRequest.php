@@ -22,7 +22,10 @@ class ParentProjectStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'max:255']
+            'title' => ['required', 'max:255'],
+            'intersections' => ['required', 'array'],
+            'intersections.*.intersection_name' => ['required', 'string'],
+            'intersections.*.id' => ['nullable', 'integer'],
         ];
     }
 }
