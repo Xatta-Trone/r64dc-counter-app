@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use App\Models\ParentProject;
 use Illuminate\Support\Facades\DB;
+use App\Models\ProjectIntersection;
 use App\Http\Requests\ParentProjectIndexRequest;
 use App\Http\Requests\ParentProjectStoreRequest;
-use App\Models\ProjectIntersection;
 
 class ParentProjectController extends Controller
 {
@@ -116,7 +117,10 @@ class ParentProjectController extends Controller
             ProjectIntersection::upsert($intersections, ['parent_project_id', 'id'], ['intersection_name']);
 
             if (count($updateNeeded) > 0) {
-                // Todo: update intersection name in the projects
+                foreach ($updateNeeded as $intersection) {
+                    Project::where('project_intersection_id', $intersection['id'])->update(['intersection' => $intersection['intersection_name']]);
+                }
+
             }
         });
         return redirect()->route('parent-projects.index')->with('success', "Project Folder Updated.");
