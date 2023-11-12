@@ -20,6 +20,7 @@
     },
     "dependencies": {
         "@vuepic/vue-datepicker": "^6.0.0",
-        "lodash": "^4.17.21"
+        "lodash": "^4.17.21",
+        "vue-plyr": "^7.0.0"
     }
 }
