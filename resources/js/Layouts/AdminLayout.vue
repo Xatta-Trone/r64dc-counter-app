@@ -36,6 +36,13 @@
                                 Users
                                 </Link>
                             </li>
+                            <li v-if="$page.props.auth.user.is_admin">
+                                    <Link :href="route('vehicle-classifiers.index')"
+                                        class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-white duration-300 ease-in-out hover:bg-slate-600 dark:hover:bg-meta-4">
+                                    <DashboardIcon />
+                                    Vehicle Classifier
+                                    </Link>
+                                </li>
                         </ul>
                     </div>
                 </nav>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\VehicleClassifierController;
 use App\Models\User;
 use Inertia\Inertia;
 use App\Models\Project;
@@ -56,6 +57,7 @@ Route::middleware('auth')->group(function () {
 
 
     Route::resource('users', UserController::class)->middleware(['admin']);
+    Route::resource('vehicle-classifiers', VehicleClassifierController::class)->middleware(['admin']);
     Route::delete('users/restore/{id}', [UserController::class, 'restore'])->middleware(['admin'])->name('users.restore');
 
     Route::resource('parent-projects', ParentProjectController::class);
