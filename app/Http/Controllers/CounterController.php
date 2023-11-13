@@ -220,7 +220,9 @@ class CounterController extends Controller
     {
         // dd($request->all());
         try {
-            $projectData = ProjectTimeData::find($id)->update(['data' => $request->data]);
+            if ($request->data) {
+                ProjectTimeData::find($id)->update(['data' => $request->data]);
+            }
             return response()->json(['msg' => 'Updated..']);
         } catch (Exception $e) {
             return response()->json(['msg' => 'Error' . $e->getMessage()], 400);
