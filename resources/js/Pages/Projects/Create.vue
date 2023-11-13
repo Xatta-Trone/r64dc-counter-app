@@ -1,7 +1,7 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import { useForm } from '@inertiajs/vue3'
-import { reactive, ref, nextTick, onMounted } from 'vue'
+import { reactive, ref, nextTick, onMounted, computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
@@ -15,6 +15,7 @@ let props = defineProps({
     'times': Array,
     'project': Object,
     'parents': Array,
+    'vehicles': Array,
 });
 
 
@@ -48,6 +49,14 @@ onMounted(() => {
         }
     }
 
+});
+
+const availableVehicles = computed({
+    // getter
+    get() {
+        const current = form.items.map(el => el.title)
+        return props.vehicles.filter(el => !current.includes(el))
+    },
 });
 
 const updateTitle = () => {
@@ -106,8 +115,6 @@ function handleNewItem() {
         if (document.getElementById(Id) != null) {
             document.getElementById(Id)?.focus();
         }
-
-
     });
 
 }
@@ -428,18 +435,23 @@ const handleIntersectionChange = () => {
                     </div>
                 </div>
 
+
                 <div class="mt-6 flex">
                     <div class="flex-auto">
-                        <label for="Item" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">
-                            Add New Item for counting and press <kbd
-                                class="px-2 py-1.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">Enter
-                            </kbd>
-                            to add</label>
-                        <input type="text" id="Item"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
-                            placeholder="Car/CNG" v-on:keydown.enter.prevent="handleNewItem" v-model="itemName">
+                        <label for="vehicles" class="block mb-2 text-md font-medium text-gray-900 dark:text-white">
+                            Vehicle Classification {{ itemName }}
+                        </label>
+                        <select id="vehicles" v-model="itemName"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 ">
+                            <option value="" disabled>Choose vehicle classification</option>
+                            <option v-for="vehicle in availableVehicles" :value="vehicle" :key="vehicle">{{ vehicle }}
+                            </option>
+                        </select>
                     </div>
-
+                    <div class="flex-auto">
+                        <label for="vehicles" class="block mb-2 text-md font-medium text-gray-900 dark:text-white"></label>
+                        <button @click.prevent="handleNewItem" class="mt-6 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg w-full sm:w-auto px-5 py-2 ml-3 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">Add Vehicle {{ itemName ? itemName : "" }}</button>
+                    </div>
                 </div>
 
                 <button type="submit"
@@ -450,8 +462,10 @@ const handleIntersectionChange = () => {
         </div>
 
 
-</AdminLayout></template>
-<style>.dp__action_select {
+    </AdminLayout>
+</template>
+<style>
+.dp__action_select {
     background-color: #000000 !important;
     color: white !important;
 }</style>
