@@ -19,6 +19,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Requests\CounterStoreRequest;
 use App\Http\Requests\ProjectUpdateRequest;
 use App\Http\Requests\Projects\ProjectsIndexRequest;
+use App\Models\VehicleClassifier;
 
 class CounterController extends Controller
 {
@@ -74,6 +75,7 @@ class CounterController extends Controller
     {
         $c = CarbonPeriod::since('00:00')->minutes(5)->until('24:00')->toArray();
         $parents = ParentProject::select('id', 'title')->orderBy('id', 'desc')->get();
+        $vehicles = VehicleClassifier::select('id', 'name')->orderBy('name', 'asc')->get()->pluck('name')->toArray();
 
 
         $data = [];
@@ -85,14 +87,15 @@ class CounterController extends Controller
             }
         }
 
-        return Inertia::render('Projects/Create', ['times' => $data, 'parents' => $parents]);
+
+        return Inertia::render('Projects/Create', ['times' => $data, 'parents' => $parents, 'vehicles' => $vehicles]);
     }
 
     public function duplicate(int $id)
     {
         $project = Project::with(['FirstProjectData', 'lastProjectData'])->findOrFail($id);
-
         $c = CarbonPeriod::since('00:00')->minutes(5)->until('24:00')->toArray();
+        $vehicles = VehicleClassifier::select('id', 'name')->orderBy('name', 'asc')->get()->pluck('name')->toArray();
 
         $data = [];
         foreach ($c as $k => $a) {
@@ -105,7 +108,7 @@ class CounterController extends Controller
 
         $parents = ParentProject::select('id', 'title')->orderBy('id', 'desc')->get();
 
-        return Inertia::render('Projects/Create', ['times' => $data, 'project' => $project, 'parents' => $parents]);
+        return Inertia::render('Projects/Create', ['times' => $data, 'project' => $project, 'parents' => $parents, 'vehicles' => $vehicles]);
     }
 
     public function store(CounterStoreRequest $request)
@@ -217,7 +220,9 @@ class CounterController extends Controller
     {
         // dd($request->all());
         try {
-            $projectData = ProjectTimeData::find($id)->update(['data' => $request->data]);
+            if ($request->data) {
+                ProjectTimeData::find($id)->update(['data' => $request->data]);
+            }
             return response()->json(['msg' => 'Updated..']);
         } catch (Exception $e) {
             return response()->json(['msg' => 'Error' . $e->getMessage()], 400);
