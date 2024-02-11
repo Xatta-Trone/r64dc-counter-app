@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Project;
+use App\Traits\ExcelHelperTrait;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -31,6 +32,7 @@ class DataCalculation implements
     }
 
     use Exportable, RegistersEventListeners;
+    use ExcelHelperTrait;
 
     public function title(): string
     {
@@ -136,19 +138,6 @@ class DataCalculation implements
         return new Collection($data);
     }
 
-    private function getCharacterAt(int $index): string
-    {
-        $letters = range('A', 'Z');
-
-        if ($index > 26) {
-            $reminder = $index % 26;
-            $quotient = (int)floor($index / 26);
-
-            return $letters[$quotient - 1] . $letters[$reminder - 1];
-        } else {
-            return $letters[$index - 1];
-        }
-    }
 
     public function getRoute($key)
     {
