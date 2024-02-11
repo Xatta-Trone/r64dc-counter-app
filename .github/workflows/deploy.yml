@@ -29,6 +29,6 @@ jobs:
           sudo git pull origin main --rebase
           sudo composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
           sudo php artisan migrate --force
-          sudo npm ci
-          sudo npm run build
+          sudo yarn
+          sudo yarn build
           sudo php artisan optimize:clear
