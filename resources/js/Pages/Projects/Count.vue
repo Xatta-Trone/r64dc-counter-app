@@ -222,7 +222,7 @@ const getFileInputValue = (event) => {
 
     if (videos.value.length > 0) {
         currentVideoIdx.value = 0;
-        playVideo(0);
+        // playVideo(0);
     }
 
 
